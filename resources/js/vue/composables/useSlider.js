@@ -11,6 +11,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
     const jump = ref(null);
     let timer = null;
     let pending = null;
+    let runningDelta = 0;
 
     const total = computed(() => count());
 
@@ -46,6 +47,18 @@ export function useSlider({ count, loop, width, start = 0 }) {
         done?.();
     }
 
+    function interrupt(visualOffset) {
+        if (!animating.value) {
+            return offset.value;
+        }
+
+        const delta = pending ? runningDelta : 0;
+        finish();
+        offset.value = visualOffset + delta * width();
+
+        return offset.value;
+    }
+
     function afterRunning(action) {
         if (!animating.value) {
             return false;
@@ -71,6 +84,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
 
         offset.value = -delta * width();
         target.value = wrap(index.value + delta);
+        runningDelta = delta;
         settle(() => {
             index.value = wrap(index.value + delta);
             offset.value = 0;
@@ -93,6 +107,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
         const direction = next === wrap(index.value - 1) || (next < index.value && next !== wrap(index.value + 1)) ? -1 : 1;
 
         jump.value = { position: next, direction };
+        runningDelta = direction;
         offset.value = -direction * width();
         target.value = next;
         settle(() => {
@@ -134,5 +149,5 @@ export function useSlider({ count, loop, width, start = 0 }) {
         offset.value = 0;
     }
 
-    return { index, target, offset, animating, prevIndex, nextIndex, step, goTo, drag, release, reset, wrap };
+    return { index, target, offset, animating, prevIndex, nextIndex, step, goTo, drag, release, reset, interrupt, wrap };
 }

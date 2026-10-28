@@ -24,6 +24,7 @@ const emit = defineEmits(['change']);
 
 const text = computed(() => ({ ...DEFAULT_LABELS, ...props.labels }));
 const stage = ref(null);
+const track = ref(null);
 const width = ref(0);
 const lightboxIndex = ref(null);
 
@@ -65,7 +66,12 @@ function onPointerDown(event) {
         return;
     }
 
-    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, lastX: event.clientX, lastTime: performance.now(), velocity: 0, axis: null };
+    const base = slider.animating.value ? slider.interrupt(new DOMMatrix(getComputedStyle(track.value).transform).m41) : 0;
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, base, lastX: event.clientX, lastTime: performance.now(), velocity: 0, axis: base !== 0 ? 'x' : null };
+
+    if (base !== 0) {
+        stage.value.setPointerCapture(event.pointerId);
+    }
 }
 
 function onPointerMove(event) {
@@ -92,7 +98,7 @@ function onPointerMove(event) {
     drag.velocity = (event.clientX - drag.lastX) / Math.max(1, now - drag.lastTime);
     drag.lastX = event.clientX;
     drag.lastTime = now;
-    slider.drag(dx);
+    slider.drag(drag.base + dx);
 }
 
 function onPointerUp(event) {
@@ -101,7 +107,7 @@ function onPointerUp(event) {
     }
 
     if (drag.axis === 'x') {
-        slider.release(event.clientX - drag.x, drag.velocity);
+        slider.release(drag.base + event.clientX - drag.x, drag.velocity);
     } else if (!drag.axis && props.lightbox) {
         lightboxIndex.value = slider.index.value;
     }
@@ -132,7 +138,7 @@ function onLightboxChange(index) {
             @pointerup="onPointerUp"
             @pointercancel="onPointerUp"
         >
-            <div class="absolute inset-0" :style="trackStyle">
+            <div ref="track" class="absolute inset-0" :style="trackStyle">
                 <div
                     v-for="slide in slides"
                     :key="slide.position"

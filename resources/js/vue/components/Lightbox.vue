@@ -37,6 +37,7 @@ const CLOSE_DURATION = 250;
 const text = computed(() => ({ ...DEFAULT_LABELS, ...props.labels }));
 const root = ref(null);
 const stage = ref(null);
+const track = ref(null);
 let currentImage = null;
 const isOpen = ref(false);
 const isVisible = ref(false);
@@ -370,8 +371,11 @@ function onPointerDown(event) {
         return;
     }
 
+    const base = slider.animating.value && !zoomed.value ? slider.interrupt(new DOMMatrix(getComputedStyle(track.value).transform).m41) : 0;
+
     gesture = {
-        type: 'pending',
+        type: base !== 0 ? 'swipe' : 'pending',
+        base,
         startX: event.clientX,
         startY: event.clientY,
         time: performance.now(),
@@ -436,7 +440,7 @@ function onPointerMove(event) {
         zoom.x = panned.x;
         zoom.y = panned.y;
     } else if (gesture.type === 'swipe') {
-        slider.drag(dx);
+        slider.drag(gesture.base + dx);
     } else if (gesture.type === 'dismiss') {
         dismiss.animate = false;
         dismiss.y = dy;
@@ -474,7 +478,7 @@ function onPointerUp(event) {
         zoom.x = panned.x;
         zoom.y = panned.y;
     } else if (gesture.type === 'swipe') {
-        slider.release(dx, gesture.velocityX);
+        slider.release(gesture.base + dx, gesture.velocityX);
     } else if (gesture.type === 'dismiss') {
         if (Math.abs(dy) > CLOSE_DISTANCE || Math.abs(gesture.velocityY) > 0.7) {
             close();
@@ -652,7 +656,7 @@ defineExpose({ close });
                 @pointercancel="onPointerUp"
                 @wheel="onWheel"
             >
-                <div class="absolute inset-0" :style="trackStyle">
+                <div ref="track" class="absolute inset-0" :style="trackStyle">
                     <div
                         v-for="slide in slides"
                         :key="slide.position"
