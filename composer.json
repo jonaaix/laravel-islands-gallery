@@ -1,0 +1,23 @@
+{
+    "name": "aaix/laravel-islands-gallery",
+    "description": "An image gallery for Laravel Islands: an inline carousel with thumbnails and a lightbox with zoom, pan, swipe and keyboard control.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jonas Gnioui",
+            "email": "jonaaix@icloud.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.3",
+        "aaix/laravel-islands": "^1.0"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
