@@ -23,6 +23,7 @@ const props = defineProps({
     thumbnails: { type: Boolean, default: true },
     slideshowInterval: { type: Number, default: 4000 },
     maxZoom: { type: Number, default: 4 },
+    originRadius: { type: Number, default: 12 },
     labels: { type: Object, default: () => ({}) },
 });
 
@@ -43,7 +44,8 @@ const stageWidth = ref(0);
 const fullscreen = ref(false);
 const playing = ref(false);
 const chromeHidden = ref(false);
-const intro = reactive({ transform: '', transition: '', opacity: 1 });
+const IMAGE_RADIUS = 8;
+const intro = reactive({ transform: '', clip: '', transition: '', opacity: 1 });
 const closing = ref(false);
 const zoom = reactive({ scale: 1, x: 0, y: 0, animate: false });
 const dismiss = reactive({ y: 0, animate: false });
@@ -70,7 +72,7 @@ const trackStyle = computed(() => ({
 
 const currentStyle = computed(() => {
     if (intro.transform) {
-        return { transform: intro.transform, transition: intro.transition, opacity: intro.opacity };
+        return { transform: intro.transform, clipPath: intro.clip || undefined, transition: intro.transition, opacity: intro.opacity };
     }
 
     const dismissScale = 1 - dismissProgress.value * 0.25;
@@ -104,9 +106,20 @@ function measure() {
     stageWidth.value = stage.value?.clientWidth ?? window.innerWidth;
 }
 
+function layoutRect(image) {
+    const { transform, transition } = image.style;
+    image.style.transition = 'none';
+    image.style.transform = 'none';
+    const rect = image.getBoundingClientRect();
+    image.style.transform = transform;
+    image.style.transition = transition;
+
+    return rect;
+}
+
 function fromOrigin(image) {
     const rect = props.origin?.(slider.index.value);
-    const target = image?.getBoundingClientRect();
+    const target = image ? layoutRect(image) : null;
 
     if (!rect || !target || target.width === 0 || rect.width === 0) {
         return null;
@@ -115,8 +128,23 @@ function fromOrigin(image) {
     const scale = Math.max(rect.width / target.width, rect.height / target.height);
     const dx = rect.left + rect.width / 2 - (target.left + target.width / 2);
     const dy = rect.top + rect.height / 2 - (target.top + target.height / 2);
+    const cropX = Math.max(0, (target.width - rect.width / scale) / 2);
+    const cropY = Math.max(0, (target.height - rect.height / scale) / 2);
 
-    return `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
+    return {
+        transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`,
+        clip: `inset(${cropY}px ${cropX}px ${cropY}px ${cropX}px round ${props.originRadius / scale}px)`,
+    };
+}
+
+const UNCLIPPED = `inset(0px 0px 0px 0px round ${IMAGE_RADIUS}px)`;
+
+function restingTransform() {
+    return `translate3d(${zoom.x}px, ${zoom.y + dismiss.y}px, 0) scale(${zoom.scale * (1 - dismissProgress.value * 0.25)})`;
+}
+
+function nextFrame(callback) {
+    requestAnimationFrame(() => requestAnimationFrame(callback));
 }
 
 async function animateIn() {
@@ -135,18 +163,21 @@ async function animateIn() {
 
     const start = fromOrigin(image);
     intro.transition = 'none';
-    intro.transform = start ?? 'translate3d(0, 12px, 0) scale(0.96)';
+    intro.transform = start?.transform ?? 'translate3d(0, 12px, 0) scale(0.96)';
+    intro.clip = start?.clip ?? '';
+    intro.opacity = start ? 1 : 0;
 
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            isVisible.value = true;
-            intro.transition = `transform ${SLIDE_DURATION}ms ${SLIDE_EASING}`;
-            intro.transform = 'translate3d(0, 0, 0) scale(1)';
-            setTimeout(() => {
-                intro.transform = '';
-                intro.transition = '';
-            }, SLIDE_DURATION);
-        });
+    nextFrame(() => {
+        isVisible.value = true;
+        intro.transition = `transform ${SLIDE_DURATION}ms ${SLIDE_EASING}, clip-path ${SLIDE_DURATION}ms ${SLIDE_EASING}, opacity ${SLIDE_DURATION}ms ease-out`;
+        intro.transform = 'translate3d(0, 0, 0) scale(1)';
+        intro.clip = start ? UNCLIPPED : '';
+        intro.opacity = 1;
+        setTimeout(() => {
+            intro.transform = '';
+            intro.clip = '';
+            intro.transition = '';
+        }, SLIDE_DURATION);
     });
 }
 
@@ -164,32 +195,33 @@ function open(index) {
     animateIn().then(() => root.value?.focus({ preventScroll: true }));
 }
 
-function close(thrown = false) {
+function close() {
     if (!isOpen.value || closing.value) {
         return;
     }
 
     stopSlideshow();
     closing.value = true;
-    isVisible.value = false;
+    const end = currentImage ? fromOrigin(currentImage) : null;
 
-    if (thrown) {
-        const direction = Math.sign(dismiss.y) || 1;
-        const scale = zoom.scale * (1 - dismissProgress.value * 0.25);
-        intro.transition = `transform ${CLOSE_DURATION}ms ease-out, opacity ${CLOSE_DURATION * 0.8}ms ease-out`;
-        intro.transform = `translate3d(${zoom.x}px, ${zoom.y + dismiss.y + direction * window.innerHeight * 0.3}px, 0) scale(${scale * 0.92})`;
-        intro.opacity = 0;
-    } else {
-        const end = zoomed.value ? null : fromOrigin(currentImage);
-        intro.transition = `transform ${CLOSE_DURATION}ms ${SLIDE_EASING}, opacity ${CLOSE_DURATION}ms ease-out`;
-        intro.transform = end ?? 'translate3d(0, 16px, 0) scale(0.96)';
+    intro.transition = 'none';
+    intro.transform = restingTransform();
+    intro.clip = end ? UNCLIPPED : '';
+    intro.opacity = 1;
+
+    nextFrame(() => {
+        isVisible.value = false;
+        intro.transition = `transform ${CLOSE_DURATION}ms ${SLIDE_EASING}, clip-path ${CLOSE_DURATION}ms ${SLIDE_EASING}, opacity ${CLOSE_DURATION}ms ease-out`;
+        intro.transform = end?.transform ?? `translate3d(${zoom.x}px, ${zoom.y + dismiss.y + 16}px, 0) scale(0.96)`;
+        intro.clip = end?.clip ?? '';
         intro.opacity = end ? 1 : 0;
-    }
+    });
 
     setTimeout(() => {
         isOpen.value = false;
         closing.value = false;
         intro.transform = '';
+        intro.clip = '';
         intro.transition = '';
         intro.opacity = 1;
         dismiss.y = 0;
@@ -203,7 +235,7 @@ function close(thrown = false) {
 
         previousFocus?.focus?.({ preventScroll: true });
         emit('close');
-    }, CLOSE_DURATION);
+    }, CLOSE_DURATION + 40);
 }
 
 watch(
@@ -445,7 +477,7 @@ function onPointerUp(event) {
         slider.release(dx, gesture.velocityX);
     } else if (gesture.type === 'dismiss') {
         if (Math.abs(dy) > CLOSE_DISTANCE || Math.abs(gesture.velocityY) > 0.7) {
-            close(true);
+            close();
         } else {
             dismiss.animate = true;
             dismiss.y = 0;
@@ -656,11 +688,11 @@ defineExpose({ close });
             </div>
 
             <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-3 p-3 sm:p-4" :class="chromeClass">
-                <span class="ilg-island px-3 py-1.5 text-sm font-medium tabular-nums text-white/90">
+                <span class="ilg-island rounded-full px-3 py-1.5 text-sm font-medium tabular-nums text-white/90">
                     {{ format(text.counter, { current: slider.target.value + 1, total: images.length }) }}
                 </span>
 
-                <div class="ilg-island flex items-center gap-0.5 p-1">
+                <div class="ilg-island flex items-center gap-0.5 rounded-full p-1">
                     <IconButton :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleZoom()">
                         <IconZoomOut v-if="zoomed" />
                         <IconZoomIn v-else />
@@ -697,8 +729,8 @@ defineExpose({ close });
             </template>
 
             <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 px-3 pb-3 sm:pb-4" :class="chromeClass">
-                <p v-if="current?.caption" class="ilg-island max-w-3xl px-3 py-1 text-center text-sm text-white/80">{{ current.caption }}</p>
-                <div v-if="showThumbnails" class="ilg-island w-fit max-w-full rounded-2xl p-1">
+                <p v-if="current?.caption" class="ilg-island max-w-3xl rounded-full px-3 py-1 text-center text-sm text-white/80">{{ current.caption }}</p>
+                <div v-if="showThumbnails" class="ilg-island w-fit max-w-full overflow-hidden rounded-[14px] p-1">
                     <Thumbnails :images="images" :index="slider.target.value" :label="(position) => format(text.image, { number: position + 1 })" tone="overlay" @select="selectThumbnail" />
                 </div>
             </div>
@@ -709,7 +741,6 @@ defineExpose({ close });
 <style>
 .ilg-island {
     pointer-events: auto;
-    border-radius: 9999px;
     background-color: rgb(255 255 255 / 0.1);
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.15), 0 10px 30px -10px rgb(0 0 0 / 0.6);
     backdrop-filter: blur(16px) saturate(160%);
