@@ -5,6 +5,7 @@ export const SLIDE_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 export function useSlider({ count, loop, width, start = 0 }) {
     const index = ref(start);
+    const target = ref(start);
     const offset = ref(0);
     const animating = ref(false);
     let timer = null;
@@ -46,6 +47,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
         }
 
         offset.value = -delta * width();
+        target.value = wrap(index.value + delta);
         settle(() => {
             index.value = wrap(index.value + delta);
             offset.value = 0;
@@ -54,8 +56,8 @@ export function useSlider({ count, loop, width, start = 0 }) {
         return true;
     }
 
-    function goTo(target) {
-        const next = wrap(target);
+    function goTo(position) {
+        const next = wrap(position);
 
         if (next === index.value || animating.value) {
             return;
@@ -68,6 +70,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
         }
 
         index.value = next;
+        target.value = next;
         offset.value = 0;
     }
 
@@ -93,12 +96,13 @@ export function useSlider({ count, loop, width, start = 0 }) {
         return false;
     }
 
-    function reset(target = 0) {
+    function reset(destination = 0) {
         clearTimeout(timer);
         animating.value = false;
-        index.value = wrap(target);
+        index.value = wrap(destination);
+        target.value = index.value;
         offset.value = 0;
     }
 
-    return { index, offset, animating, prevIndex, nextIndex, step, goTo, drag, release, reset, wrap };
+    return { index, target, offset, animating, prevIndex, nextIndex, step, goTo, drag, release, reset, wrap };
 }

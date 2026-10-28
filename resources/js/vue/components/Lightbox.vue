@@ -12,7 +12,7 @@ import IconPlay from '../icons/IconPlay.vue';
 import IconXMark from '../icons/IconXMark.vue';
 import IconZoomIn from '../icons/IconZoomIn.vue';
 import IconZoomOut from '../icons/IconZoomOut.vue';
-import { Tooltip } from '@aaix/laravel-islands/vue/helpers';
+import { IconButton } from '@aaix/laravel-islands/vue/helpers';
 import Thumbnails from './Thumbnails.vue';
 
 const props = defineProps({
@@ -31,6 +31,7 @@ const emit = defineEmits(['update:index', 'close']);
 const MIN_DRAG = 8;
 const CLOSE_DISTANCE = 120;
 const DOUBLE_TAP_MS = 280;
+const CLOSE_DURATION = 250;
 
 const text = computed(() => ({ ...DEFAULT_LABELS, ...props.labels }));
 const root = ref(null);
@@ -42,7 +43,8 @@ const stageWidth = ref(0);
 const fullscreen = ref(false);
 const playing = ref(false);
 const chromeHidden = ref(false);
-const intro = reactive({ transform: '', transition: '' });
+const intro = reactive({ transform: '', transition: '', opacity: 1 });
+const closing = ref(false);
 const zoom = reactive({ scale: 1, x: 0, y: 0, animate: false });
 const dismiss = reactive({ y: 0, animate: false });
 
@@ -68,7 +70,7 @@ const trackStyle = computed(() => ({
 
 const currentStyle = computed(() => {
     if (intro.transform) {
-        return { transform: intro.transform, transition: intro.transition };
+        return { transform: intro.transform, transition: intro.transition, opacity: intro.opacity };
     }
 
     const dismissScale = 1 - dismissProgress.value * 0.25;
@@ -79,6 +81,19 @@ const currentStyle = computed(() => {
         cursor: zoomed.value ? 'grab' : 'zoom-in',
     };
 });
+
+const showThumbnails = computed(() => props.thumbnails && props.images.length > 1);
+const chromeVisible = computed(() => isVisible.value && !chromeHidden.value && dismiss.y === 0);
+const chromeClass = computed(() => (chromeVisible.value ? 'opacity-100 transition-opacity duration-200' : 'opacity-0 transition-opacity duration-150 [&_*]:pointer-events-none!'));
+
+function arrowClass(neighbour) {
+    return chromeVisible.value && !zoomed.value && neighbour !== null ? 'opacity-100' : 'pointer-events-none opacity-0';
+}
+
+function selectThumbnail(position) {
+    stopSlideshow();
+    slider.goTo(position);
+}
 
 // ----- Opening and closing -----
 
@@ -149,21 +164,34 @@ function open(index) {
     animateIn().then(() => root.value?.focus({ preventScroll: true }));
 }
 
-function close() {
-    if (!isOpen.value) {
+function close(thrown = false) {
+    if (!isOpen.value || closing.value) {
         return;
     }
 
     stopSlideshow();
-    const end = zoomed.value ? null : fromOrigin(currentImage);
+    closing.value = true;
     isVisible.value = false;
-    intro.transition = `transform ${SLIDE_DURATION}ms ${SLIDE_EASING}, opacity ${SLIDE_DURATION}ms ease-in`;
-    intro.transform = end ?? `translate3d(0, ${dismiss.y + 16}px, 0) scale(0.96)`;
+
+    if (thrown) {
+        const direction = Math.sign(dismiss.y) || 1;
+        const scale = zoom.scale * (1 - dismissProgress.value * 0.25);
+        intro.transition = `transform ${CLOSE_DURATION}ms ease-out, opacity ${CLOSE_DURATION * 0.8}ms ease-out`;
+        intro.transform = `translate3d(${zoom.x}px, ${zoom.y + dismiss.y + direction * window.innerHeight * 0.3}px, 0) scale(${scale * 0.92})`;
+        intro.opacity = 0;
+    } else {
+        const end = zoomed.value ? null : fromOrigin(currentImage);
+        intro.transition = `transform ${CLOSE_DURATION}ms ${SLIDE_EASING}, opacity ${CLOSE_DURATION}ms ease-out`;
+        intro.transform = end ?? 'translate3d(0, 16px, 0) scale(0.96)';
+        intro.opacity = end ? 1 : 0;
+    }
 
     setTimeout(() => {
         isOpen.value = false;
+        closing.value = false;
         intro.transform = '';
         intro.transition = '';
+        intro.opacity = 1;
         dismiss.y = 0;
         document.documentElement.style.overflow = previousOverflow;
         window.removeEventListener('keydown', onKeydown);
@@ -175,7 +203,7 @@ function close() {
 
         previousFocus?.focus?.({ preventScroll: true });
         emit('close');
-    }, SLIDE_DURATION);
+    }, CLOSE_DURATION);
 }
 
 watch(
@@ -294,7 +322,7 @@ function midpoint(a, b) {
 }
 
 function onPointerDown(event) {
-    if (event.button !== 0 || intro.transform) {
+    if (event.button !== 0 || intro.transform || closing.value) {
         return;
     }
 
@@ -417,7 +445,7 @@ function onPointerUp(event) {
         slider.release(dx, gesture.velocityX);
     } else if (gesture.type === 'dismiss') {
         if (Math.abs(dy) > CLOSE_DISTANCE || Math.abs(gesture.velocityY) > 0.7) {
-            close();
+            close(true);
         } else {
             dismiss.animate = true;
             dismiss.y = 0;
@@ -572,65 +600,20 @@ defineExpose({ close });
         <div
             v-if="isOpen"
             ref="root"
-            class="ilg-lightbox fixed inset-0 z-[70] flex flex-col overflow-hidden text-white outline-none select-none"
+            class="ilg-lightbox fixed inset-0 z-[70] overflow-hidden text-white outline-none select-none"
             role="dialog"
             tabindex="-1"
             aria-modal="true"
             :aria-label="text.dialog"
         >
             <div
-                class="absolute inset-0 bg-neutral-950/95 backdrop-blur-2xl transition-opacity duration-[350ms] ease-out"
-                :style="{ opacity: isVisible ? 1 - dismissProgress * 0.85 : 0 }"
+                class="absolute inset-0 bg-neutral-950/95 backdrop-blur-2xl ease-out"
+                :style="{ opacity: isVisible ? 1 - dismissProgress * 0.85 : 0, transition: `opacity ${closing ? CLOSE_DURATION : SLIDE_DURATION}ms ease-out` }"
             />
 
             <div
-                class="relative z-20 flex items-center justify-between gap-3 p-3 transition-opacity duration-200 sm:p-4"
-                :class="isVisible && !chromeHidden && dismiss.y === 0 ? 'opacity-100' : 'pointer-events-none opacity-0'"
-            >
-                <span class="rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium tabular-nums text-white/90 ring-1 ring-white/15 backdrop-blur-md">
-                    {{ format(text.counter, { current: slider.index.value + 1, total: images.length }) }}
-                </span>
-
-                <div class="flex items-center gap-0.5 rounded-full bg-white/10 p-1 ring-1 ring-white/15 backdrop-blur-md">
-                    <Tooltip :text="zoomed ? text.zoomOut : text.zoomIn" placement="bottom">
-                        <button type="button" class="ilg-tool" :aria-label="zoomed ? text.zoomOut : text.zoomIn" @click="toggleZoom()">
-                            <IconZoomOut v-if="zoomed" class="size-5" />
-                            <IconZoomIn v-else class="size-5" />
-                        </button>
-                    </Tooltip>
-                    <Tooltip v-if="images.length > 1" :text="playing ? text.pause : text.play" placement="bottom">
-                        <button type="button" class="ilg-tool" :aria-label="playing ? text.pause : text.play" @click="toggleSlideshow">
-                            <IconPause v-if="playing" class="size-5" />
-                            <IconPlay v-else class="size-5" />
-                        </button>
-                    </Tooltip>
-                    <Tooltip v-if="canFullscreen" :text="fullscreen ? text.exitFullscreen : text.fullscreen" placement="bottom">
-                        <button type="button" class="ilg-tool" :aria-label="fullscreen ? text.exitFullscreen : text.fullscreen" @click="toggleFullscreen">
-                            <IconFullscreenExit v-if="fullscreen" class="size-5" />
-                            <IconFullscreen v-else class="size-5" />
-                        </button>
-                    </Tooltip>
-                    <Tooltip v-if="current" :text="text.openOriginal" placement="bottom">
-                        <a class="ilg-tool" :href="current.src" target="_blank" rel="noopener" :aria-label="text.openOriginal">
-                            <IconOpenOriginal class="size-5" />
-                        </a>
-                    </Tooltip>
-                    <span class="mx-0.5 h-5 w-px bg-white/15" aria-hidden="true" />
-                    <Tooltip :text="text.close" placement="bottom">
-                        <button type="button" class="ilg-tool" :aria-label="text.close" @click="close">
-                            <IconXMark class="size-5" />
-                        </button>
-                    </Tooltip>
-                </div>
-            </div>
-
-            <div v-if="playing" :key="slideshowKey" class="absolute inset-x-0 top-0 z-30 h-0.5 bg-white/10">
-                <div class="ilg-progress h-full bg-white/70" :style="{ animationDuration: `${slideshowInterval}ms` }" />
-            </div>
-
-            <div
                 ref="stage"
-                class="relative z-10 min-h-0 flex-1 touch-none overflow-hidden"
+                class="absolute inset-0 touch-none overflow-hidden"
                 @pointerdown="onPointerDown"
                 @pointermove="onPointerMove"
                 @pointerup="onPointerUp"
@@ -641,7 +624,8 @@ defineExpose({ close });
                     <div
                         v-for="slide in slides"
                         :key="slide.position"
-                        class="absolute inset-0 flex items-center justify-center px-3 py-2 sm:px-20"
+                        class="absolute inset-0 flex items-center justify-center px-3 pt-16 sm:px-20 sm:pt-20"
+                        :class="showThumbnails ? 'pb-32 sm:pb-36' : 'pb-16'"
                         :style="{ transform: `translate3d(${slide.position * 100}%, 0, 0)` }"
                     >
                         <img
@@ -660,51 +644,62 @@ defineExpose({ close });
                             :src="slide.image.src"
                             alt=""
                             draggable="false"
-                            class="max-h-full max-w-full rounded-lg object-contain opacity-90 shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)]"
+                            class="max-h-full max-w-full rounded-lg object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)]"
                             :style="{ opacity: isVisible ? 0.9 : 0 }"
                         />
                     </div>
                 </div>
-
-                <template v-if="images.length > 1">
-                    <div class="absolute top-1/2 z-10 -translate-y-1/2 left-3 sm:left-5">
-                        <Tooltip :text="text.previous">
-                            <button
-                                type="button"
-                                class="ilg-arrow"
-                                :class="isVisible && !chromeHidden && !zoomed && dismiss.y === 0 && slider.prevIndex.value !== null ? 'opacity-100' : 'pointer-events-none opacity-0'"
-                                :aria-label="text.previous"
-                                @pointerdown.stop
-                                @click="previous"
-                            >
-                                <IconChevronLeft class="size-6" />
-                            </button>
-                        </Tooltip>
-                    </div>
-                    <div class="absolute top-1/2 z-10 -translate-y-1/2 right-3 sm:right-5">
-                        <Tooltip :text="text.next">
-                            <button
-                                type="button"
-                                class="ilg-arrow"
-                                :class="isVisible && !chromeHidden && !zoomed && dismiss.y === 0 && slider.nextIndex.value !== null ? 'opacity-100' : 'pointer-events-none opacity-0'"
-                                :aria-label="text.next"
-                                @pointerdown.stop
-                                @click="next"
-                            >
-                                <IconChevronRight class="size-6" />
-                            </button>
-                        </Tooltip>
-                    </div>
-                </template>
             </div>
 
-            <div
-                class="relative z-20 space-y-2 px-3 pb-3 pt-2 transition-opacity duration-200 sm:pb-4"
-                :class="isVisible && !chromeHidden && dismiss.y === 0 ? 'opacity-100' : 'pointer-events-none opacity-0'"
-            >
-                <p v-if="current?.caption" class="mx-auto max-w-3xl text-center text-sm text-white/75">{{ current.caption }}</p>
-                <div v-if="thumbnails && images.length > 1" class="mx-auto w-fit max-w-full rounded-2xl bg-white/5 p-1 ring-1 ring-white/10 backdrop-blur-md">
-                    <Thumbnails :images="images" :index="slider.index.value" :label="(position) => format(text.image, { number: position + 1 })" tone="overlay" @select="(position) => { stopSlideshow(); slider.goTo(position); }" />
+            <div v-if="playing" :key="slideshowKey" class="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 bg-white/10">
+                <div class="ilg-progress h-full bg-white/70" :style="{ animationDuration: `${slideshowInterval}ms` }" />
+            </div>
+
+            <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-3 p-3 sm:p-4" :class="chromeClass">
+                <span class="ilg-island px-3 py-1.5 text-sm font-medium tabular-nums text-white/90">
+                    {{ format(text.counter, { current: slider.target.value + 1, total: images.length }) }}
+                </span>
+
+                <div class="ilg-island flex items-center gap-0.5 p-1">
+                    <IconButton :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleZoom()">
+                        <IconZoomOut v-if="zoomed" />
+                        <IconZoomIn v-else />
+                    </IconButton>
+                    <IconButton v-if="images.length > 1" :label="playing ? text.pause : text.play" tone="plain" size="lg" class="ilg-tool" @click="toggleSlideshow">
+                        <IconPause v-if="playing" />
+                        <IconPlay v-else />
+                    </IconButton>
+                    <IconButton v-if="canFullscreen" :label="fullscreen ? text.exitFullscreen : text.fullscreen" tone="plain" size="lg" class="ilg-tool" @click="toggleFullscreen">
+                        <IconFullscreenExit v-if="fullscreen" />
+                        <IconFullscreen v-else />
+                    </IconButton>
+                    <IconButton v-if="current" :label="text.openOriginal" :href="current.src" tone="plain" size="lg" class="ilg-tool">
+                        <IconOpenOriginal />
+                    </IconButton>
+                    <span class="mx-0.5 h-5 w-px bg-white/15" aria-hidden="true" />
+                    <IconButton :label="text.close" tone="plain" size="lg" class="ilg-tool" @click="close()">
+                        <IconXMark />
+                    </IconButton>
+                </div>
+            </div>
+
+            <template v-if="images.length > 1">
+                <div class="ilg-arrow-slot left-3 sm:left-5" :class="arrowClass(slider.prevIndex.value)">
+                    <IconButton :label="text.previous" tone="plain" size="xl" class="ilg-arrow" @pointerdown.stop @click="previous">
+                        <IconChevronLeft />
+                    </IconButton>
+                </div>
+                <div class="ilg-arrow-slot right-3 sm:right-5" :class="arrowClass(slider.nextIndex.value)">
+                    <IconButton :label="text.next" tone="plain" size="xl" class="ilg-arrow" @pointerdown.stop @click="next">
+                        <IconChevronRight />
+                    </IconButton>
+                </div>
+            </template>
+
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 px-3 pb-3 sm:pb-4" :class="chromeClass">
+                <p v-if="current?.caption" class="ilg-island max-w-3xl px-3 py-1 text-center text-sm text-white/80">{{ current.caption }}</p>
+                <div v-if="showThumbnails" class="ilg-island w-fit max-w-full rounded-2xl p-1">
+                    <Thumbnails :images="images" :index="slider.target.value" :label="(position) => format(text.image, { number: position + 1 })" tone="overlay" @select="selectThumbnail" />
                 </div>
             </div>
         </div>
@@ -712,16 +707,16 @@ defineExpose({ close });
 </template>
 
 <style>
-.ilg-tool {
-    position: relative;
-    display: inline-flex;
-    height: 2.25rem;
-    width: 2.25rem;
-    align-items: center;
-    justify-content: center;
+.ilg-island {
+    pointer-events: auto;
     border-radius: 9999px;
+    background-color: rgb(255 255 255 / 0.1);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.15), 0 10px 30px -10px rgb(0 0 0 / 0.6);
+    backdrop-filter: blur(16px) saturate(160%);
+}
+
+.ilg-tool {
     color: rgb(255 255 255 / 0.85);
-    transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
 .ilg-tool:hover {
@@ -729,36 +724,31 @@ defineExpose({ close });
     color: white;
 }
 
-.ilg-tool:focus-visible {
-    outline: 2px solid rgb(255 255 255 / 0.7);
-    outline-offset: 1px;
+.ilg-tool:active {
+    background-color: rgb(255 255 255 / 0.2);
+}
+
+.ilg-arrow-slot {
+    position: absolute;
+    top: 50%;
+    z-index: 20;
+    transform: translateY(-50%);
+    transition: opacity 200ms ease-out;
 }
 
 .ilg-arrow {
-    display: inline-flex;
-    height: 3rem;
-    width: 3rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
     background-color: rgb(255 255 255 / 0.1);
     color: white;
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.15);
     backdrop-filter: blur(12px);
-    transition: opacity 200ms ease-out, background-color 150ms ease-out;
 }
 
 .ilg-arrow:hover {
     background-color: rgb(255 255 255 / 0.2);
 }
 
-.ilg-arrow:focus-visible {
-    outline: 2px solid rgb(255 255 255 / 0.7);
-    outline-offset: 2px;
-}
-
 @media (hover: none) {
-    .ilg-arrow {
+    .ilg-arrow-slot {
         display: none;
     }
 }
@@ -773,5 +763,4 @@ defineExpose({ close });
     from { width: 0; }
     to { width: 100%; }
 }
-
 </style>

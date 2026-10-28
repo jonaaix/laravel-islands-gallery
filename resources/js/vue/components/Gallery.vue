@@ -5,7 +5,7 @@ import { DEFAULT_LABELS, format } from '../labels.js';
 import IconChevronLeft from '../icons/IconChevronLeft.vue';
 import IconChevronRight from '../icons/IconChevronRight.vue';
 import IconFullscreen from '../icons/IconFullscreen.vue';
-import { Tooltip } from '@aaix/laravel-islands/vue/helpers';
+import { IconButton } from '@aaix/laravel-islands/vue/helpers';
 import Lightbox from './Lightbox.vue';
 import Thumbnails from './Thumbnails.vue';
 
@@ -155,18 +155,14 @@ function onLightboxChange(index) {
 
             <template v-if="images.length > 1">
                 <div v-if="slider.prevIndex.value !== null" class="absolute left-2 top-1/2 -translate-y-1/2">
-                    <Tooltip :text="text.previous">
-                        <button type="button" class="ilg-inline-arrow" :aria-label="text.previous" @pointerdown.stop @click="slider.step(-1)">
-                            <IconChevronLeft class="size-5" />
-                        </button>
-                    </Tooltip>
+                    <IconButton :label="text.previous" tone="plain" size="lg" class="ilg-inline-arrow" @pointerdown.stop @click="slider.step(-1)">
+                        <IconChevronLeft />
+                    </IconButton>
                 </div>
                 <div v-if="slider.nextIndex.value !== null" class="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Tooltip :text="text.next">
-                        <button type="button" class="ilg-inline-arrow" :aria-label="text.next" @pointerdown.stop @click="slider.step(1)">
-                            <IconChevronRight class="size-5" />
-                        </button>
-                    </Tooltip>
+                    <IconButton :label="text.next" tone="plain" size="lg" class="ilg-inline-arrow" @pointerdown.stop @click="slider.step(1)">
+                        <IconChevronRight />
+                    </IconButton>
                 </div>
             </template>
 
@@ -174,28 +170,20 @@ function onLightboxChange(index) {
                 v-if="images.length > 1"
                 class="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium tabular-nums text-white backdrop-blur-sm"
             >
-                {{ format(text.counter, { current: slider.index.value + 1, total: images.length }) }}
+                {{ format(text.counter, { current: slider.target.value + 1, total: images.length }) }}
             </span>
 
             <div v-if="lightbox" class="absolute right-2 top-2">
-                <Tooltip :text="text.open" placement="left">
-                    <button
-                        type="button"
-                        class="inline-flex size-8 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition-opacity duration-500 ease-out group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-                        :aria-label="text.open"
-                        @pointerdown.stop
-                        @click="lightboxIndex = slider.index.value"
-                    >
-                        <IconFullscreen class="size-4" />
-                    </button>
-                </Tooltip>
+                <IconButton :label="text.open" tone="plain" size="md" class="ilg-inline-open" @pointerdown.stop @click="lightboxIndex = slider.index.value">
+                    <IconFullscreen />
+                </IconButton>
             </div>
         </div>
 
         <Thumbnails
             v-if="thumbnails && images.length > 1"
             :images="images"
-            :index="slider.index.value"
+            :index="slider.target.value"
             :label="(position) => format(text.image, { number: position + 1 })"
             @select="slider.goTo"
         />
@@ -215,12 +203,6 @@ function onLightboxChange(index) {
 
 <style>
 .ilg-inline-arrow {
-    display: inline-flex;
-    height: 2.25rem;
-    width: 2.25rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
     background-color: rgb(255 255 255 / 0.85);
     color: rgb(17 24 39);
     box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25), inset 0 0 0 1px rgb(0 0 0 / 0.06);
@@ -253,9 +235,30 @@ function onLightboxChange(index) {
     background-color: rgb(31 41 55 / 0.95);
 }
 
+.ilg-inline-open {
+    background-color: rgb(0 0 0 / 0.45);
+    color: white;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 500ms ease-out, background-color 150ms ease-out;
+}
+
+.group:hover .ilg-inline-open,
+.ilg-inline-open:focus-visible {
+    opacity: 1;
+}
+
+.ilg-inline-open:hover {
+    background-color: rgb(0 0 0 / 0.6);
+}
+
 @media (hover: none) {
     .ilg-inline-arrow {
         display: none;
+    }
+
+    .ilg-inline-open {
+        opacity: 1;
     }
 }
 </style>
