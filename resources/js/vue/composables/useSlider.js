@@ -8,6 +8,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
     const target = ref(start);
     const offset = ref(0);
     const animating = ref(false);
+    const jump = ref(null);
     let timer = null;
 
     const total = computed(() => count());
@@ -26,8 +27,8 @@ export function useSlider({ count, loop, width, start = 0 }) {
         return loop() || (index.value + delta >= 0 && index.value + delta < total.value);
     }
 
-    const prevIndex = computed(() => (canStep(-1) ? wrap(index.value - 1) : null));
-    const nextIndex = computed(() => (canStep(1) ? wrap(index.value + 1) : null));
+    const prevIndex = computed(() => (jump.value?.direction === -1 ? jump.value.position : canStep(-1) ? wrap(index.value - 1) : null));
+    const nextIndex = computed(() => (jump.value?.direction === 1 ? jump.value.position : canStep(1) ? wrap(index.value + 1) : null));
 
     function settle(onDone) {
         animating.value = true;
@@ -63,15 +64,16 @@ export function useSlider({ count, loop, width, start = 0 }) {
             return;
         }
 
-        if (Math.abs(next - index.value) === 1 || (loop() && Math.abs(next - index.value) === total.value - 1)) {
-            step(next === wrap(index.value + 1) ? 1 : -1);
+        const direction = next === wrap(index.value - 1) || (next < index.value && next !== wrap(index.value + 1)) ? -1 : 1;
 
-            return;
-        }
-
-        index.value = next;
+        jump.value = { position: next, direction };
+        offset.value = -direction * width();
         target.value = next;
-        offset.value = 0;
+        settle(() => {
+            index.value = next;
+            jump.value = null;
+            offset.value = 0;
+        });
     }
 
     function drag(dx) {
@@ -99,6 +101,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
     function reset(destination = 0) {
         clearTimeout(timer);
         animating.value = false;
+        jump.value = null;
         index.value = wrap(destination);
         target.value = index.value;
         offset.value = 0;
