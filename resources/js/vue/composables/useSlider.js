@@ -10,6 +10,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
     const animating = ref(false);
     const jump = ref(null);
     let timer = null;
+    let pending = null;
 
     const total = computed(() => count());
 
@@ -33,14 +34,35 @@ export function useSlider({ count, loop, width, start = 0 }) {
     function settle(onDone) {
         animating.value = true;
         clearTimeout(timer);
-        timer = setTimeout(() => {
-            animating.value = false;
-            onDone?.();
-        }, SLIDE_DURATION);
+        pending = onDone ?? null;
+        timer = setTimeout(finish, SLIDE_DURATION);
+    }
+
+    function finish() {
+        clearTimeout(timer);
+        const done = pending;
+        pending = null;
+        animating.value = false;
+        done?.();
+    }
+
+    function afterRunning(action) {
+        if (!animating.value) {
+            return false;
+        }
+
+        finish();
+        requestAnimationFrame(() => requestAnimationFrame(action));
+
+        return true;
     }
 
     function step(delta) {
-        if (animating.value || !canStep(delta)) {
+        if (afterRunning(() => step(delta))) {
+            return true;
+        }
+
+        if (!canStep(delta)) {
             settle();
             offset.value = 0;
 
@@ -60,7 +82,11 @@ export function useSlider({ count, loop, width, start = 0 }) {
     function goTo(position) {
         const next = wrap(position);
 
-        if (next === index.value || animating.value) {
+        if (afterRunning(() => goTo(position))) {
+            return;
+        }
+
+        if (next === index.value) {
             return;
         }
 
@@ -100,6 +126,7 @@ export function useSlider({ count, loop, width, start = 0 }) {
 
     function reset(destination = 0) {
         clearTimeout(timer);
+        pending = null;
         animating.value = false;
         jump.value = null;
         index.value = wrap(destination);
