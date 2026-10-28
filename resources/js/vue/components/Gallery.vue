@@ -155,12 +155,12 @@ function onLightboxChange(index) {
 
             <template v-if="images.length > 1">
                 <div v-if="slider.prevIndex.value !== null" class="absolute left-2 top-1/2 -translate-y-1/2">
-                    <IconButton :label="text.previous" tone="plain" size="lg" class="ilg-inline-arrow" @pointerdown.stop @click="slider.step(-1)">
+                    <IconButton :label="text.previous" tone="plain" size="md" class="ilg-inline-arrow" @pointerdown.stop @click="slider.step(-1)">
                         <IconChevronLeft />
                     </IconButton>
                 </div>
                 <div v-if="slider.nextIndex.value !== null" class="absolute right-2 top-1/2 -translate-y-1/2">
-                    <IconButton :label="text.next" tone="plain" size="lg" class="ilg-inline-arrow" @pointerdown.stop @click="slider.step(1)">
+                    <IconButton :label="text.next" tone="plain" size="md" class="ilg-inline-arrow" @pointerdown.stop @click="slider.step(1)">
                         <IconChevronRight />
                     </IconButton>
                 </div>
@@ -202,54 +202,26 @@ function onLightboxChange(index) {
 </template>
 
 <style>
-.ilg-inline-arrow {
-    background-color: rgb(255 255 255 / 0.85);
-    color: rgb(17 24 39);
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.25), inset 0 0 0 1px rgb(0 0 0 / 0.06);
-    backdrop-filter: blur(8px);
+.ilg-inline-arrow,
+.ilg-inline-open {
+    background-color: rgb(0 0 0 / 0.28);
+    color: rgb(255 255 255 / 0.92);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+    backdrop-filter: blur(6px);
     opacity: 0;
     transition: opacity 500ms ease-out, background-color 150ms ease-out;
 }
 
 .group:hover .ilg-inline-arrow,
-.ilg-inline-arrow:focus-visible {
-    opacity: 1;
-}
-
-.ilg-inline-arrow:hover {
-    background-color: white;
-}
-
-.ilg-inline-arrow:focus-visible {
-    outline: 2px solid var(--color-il-primary-500);
-    outline-offset: 2px;
-}
-
-:where(.dark) .ilg-inline-arrow {
-    background-color: rgb(17 24 39 / 0.8);
-    color: white;
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.5), inset 0 0 0 1px rgb(255 255 255 / 0.12);
-}
-
-:where(.dark) .ilg-inline-arrow:hover {
-    background-color: rgb(31 41 55 / 0.95);
-}
-
-.ilg-inline-open {
-    background-color: rgb(0 0 0 / 0.45);
-    color: white;
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    transition: opacity 500ms ease-out, background-color 150ms ease-out;
-}
-
 .group:hover .ilg-inline-open,
+.ilg-inline-arrow:focus-visible,
 .ilg-inline-open:focus-visible {
     opacity: 1;
 }
 
+.ilg-inline-arrow:hover,
 .ilg-inline-open:hover {
-    background-color: rgb(0 0 0 / 0.6);
+    background-color: rgb(0 0 0 / 0.45);
 }
 
 @media (hover: none) {
