@@ -667,26 +667,34 @@ defineExpose({ close });
                 </div>
 
                 <template v-if="images.length > 1">
-                    <button
-                        type="button"
-                        class="ilg-arrow left-3 sm:left-5"
-                        :class="isVisible && !chromeHidden && !zoomed && dismiss.y === 0 && slider.prevIndex.value !== null ? 'opacity-100' : 'pointer-events-none opacity-0'"
-                        :aria-label="text.previous"
-                        @pointerdown.stop
-                        @click="previous"
-                    >
-                        <IconChevronLeft class="size-6" />
-                    </button>
-                    <button
-                        type="button"
-                        class="ilg-arrow right-3 sm:right-5"
-                        :class="isVisible && !chromeHidden && !zoomed && dismiss.y === 0 && slider.nextIndex.value !== null ? 'opacity-100' : 'pointer-events-none opacity-0'"
-                        :aria-label="text.next"
-                        @pointerdown.stop
-                        @click="next"
-                    >
-                        <IconChevronRight class="size-6" />
-                    </button>
+                    <div class="absolute top-1/2 z-10 -translate-y-1/2 left-3 sm:left-5">
+                        <Tooltip :text="text.previous">
+                            <button
+                                type="button"
+                                class="ilg-arrow"
+                                :class="isVisible && !chromeHidden && !zoomed && dismiss.y === 0 && slider.prevIndex.value !== null ? 'opacity-100' : 'pointer-events-none opacity-0'"
+                                :aria-label="text.previous"
+                                @pointerdown.stop
+                                @click="previous"
+                            >
+                                <IconChevronLeft class="size-6" />
+                            </button>
+                        </Tooltip>
+                    </div>
+                    <div class="absolute top-1/2 z-10 -translate-y-1/2 right-3 sm:right-5">
+                        <Tooltip :text="text.next">
+                            <button
+                                type="button"
+                                class="ilg-arrow"
+                                :class="isVisible && !chromeHidden && !zoomed && dismiss.y === 0 && slider.nextIndex.value !== null ? 'opacity-100' : 'pointer-events-none opacity-0'"
+                                :aria-label="text.next"
+                                @pointerdown.stop
+                                @click="next"
+                            >
+                                <IconChevronRight class="size-6" />
+                            </button>
+                        </Tooltip>
+                    </div>
                 </template>
             </div>
 
@@ -727,13 +735,9 @@ defineExpose({ close });
 }
 
 .ilg-arrow {
-    position: absolute;
-    top: 50%;
-    z-index: 10;
     display: inline-flex;
     height: 3rem;
     width: 3rem;
-    transform: translateY(-50%);
     align-items: center;
     justify-content: center;
     border-radius: 9999px;

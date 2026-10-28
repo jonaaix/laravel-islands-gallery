@@ -5,6 +5,7 @@ import { DEFAULT_LABELS, format } from '../labels.js';
 import IconChevronLeft from '../icons/IconChevronLeft.vue';
 import IconChevronRight from '../icons/IconChevronRight.vue';
 import IconFullscreen from '../icons/IconFullscreen.vue';
+import { Tooltip } from '@aaix/laravel-islands/vue/helpers';
 import Lightbox from './Lightbox.vue';
 import Thumbnails from './Thumbnails.vue';
 
@@ -153,26 +154,20 @@ function onLightboxChange(index) {
             <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100" />
 
             <template v-if="images.length > 1">
-                <button
-                    v-if="slider.prevIndex.value !== null"
-                    type="button"
-                    class="ilg-inline-arrow left-2"
-                    :aria-label="text.previous"
-                    @pointerdown.stop
-                    @click="slider.step(-1)"
-                >
-                    <IconChevronLeft class="size-5" />
-                </button>
-                <button
-                    v-if="slider.nextIndex.value !== null"
-                    type="button"
-                    class="ilg-inline-arrow right-2"
-                    :aria-label="text.next"
-                    @pointerdown.stop
-                    @click="slider.step(1)"
-                >
-                    <IconChevronRight class="size-5" />
-                </button>
+                <div v-if="slider.prevIndex.value !== null" class="absolute left-2 top-1/2 -translate-y-1/2">
+                    <Tooltip :text="text.previous">
+                        <button type="button" class="ilg-inline-arrow" :aria-label="text.previous" @pointerdown.stop @click="slider.step(-1)">
+                            <IconChevronLeft class="size-5" />
+                        </button>
+                    </Tooltip>
+                </div>
+                <div v-if="slider.nextIndex.value !== null" class="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Tooltip :text="text.next">
+                        <button type="button" class="ilg-inline-arrow" :aria-label="text.next" @pointerdown.stop @click="slider.step(1)">
+                            <IconChevronRight class="size-5" />
+                        </button>
+                    </Tooltip>
+                </div>
             </template>
 
             <span
@@ -182,16 +177,19 @@ function onLightboxChange(index) {
                 {{ format(text.counter, { current: slider.index.value + 1, total: images.length }) }}
             </span>
 
-            <button
-                v-if="lightbox"
-                type="button"
-                class="absolute right-2 top-2 inline-flex size-8 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition-opacity duration-500 ease-out group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-                :aria-label="text.open"
-                @pointerdown.stop
-                @click="lightboxIndex = slider.index.value"
-            >
-                <IconFullscreen class="size-4" />
-            </button>
+            <div v-if="lightbox" class="absolute right-2 top-2">
+                <Tooltip :text="text.open" placement="left">
+                    <button
+                        type="button"
+                        class="inline-flex size-8 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition-opacity duration-500 ease-out group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+                        :aria-label="text.open"
+                        @pointerdown.stop
+                        @click="lightboxIndex = slider.index.value"
+                    >
+                        <IconFullscreen class="size-4" />
+                    </button>
+                </Tooltip>
+            </div>
         </div>
 
         <Thumbnails
@@ -217,12 +215,9 @@ function onLightboxChange(index) {
 
 <style>
 .ilg-inline-arrow {
-    position: absolute;
-    top: 50%;
     display: inline-flex;
     height: 2.25rem;
     width: 2.25rem;
-    transform: translateY(-50%);
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
