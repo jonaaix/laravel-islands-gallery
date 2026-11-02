@@ -201,6 +201,13 @@ function close() {
         return;
     }
 
+    if (slider.animating.value) {
+        slider.reset(slider.target.value);
+        nextTick(close);
+
+        return;
+    }
+
     stopSlideshow();
     closing.value = true;
     const end = currentImage ? fromOrigin(currentImage) : null;
