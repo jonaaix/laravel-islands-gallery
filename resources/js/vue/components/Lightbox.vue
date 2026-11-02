@@ -235,6 +235,7 @@ function close() {
         }
 
         previousFocus?.focus?.({ preventScroll: true });
+        emit('update:index', null);
         emit('close');
     }, CLOSE_DURATION + 40);
 }
