@@ -14,7 +14,7 @@ import IconSpinner from '../icons/IconSpinner.vue';
 import IconXMark from '../icons/IconXMark.vue';
 import IconZoomIn from '../icons/IconZoomIn.vue';
 import IconZoomOut from '../icons/IconZoomOut.vue';
-import { IconButton } from '@aaix/laravel-islands/vue/helpers';
+import { IconButton, lockPageScroll, unlockPageScroll } from '@aaix/laravel-islands/vue/helpers';
 import Thumbnails from './Thumbnails.vue';
 
 const props = defineProps({
@@ -160,7 +160,6 @@ function selectThumbnail(position) {
 // ----- Opening and closing -----
 
 let previousFocus = null;
-let previousOverflow = '';
 
 function measure() {
     stageWidth.value = stage.value?.clientWidth ?? window.innerWidth;
@@ -243,8 +242,7 @@ async function animateIn() {
 
 function open(index) {
     previousFocus = document.activeElement;
-    previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
+    lockPageScroll();
     slider.reset(index);
     resetZoom(false);
     dismiss.y = 0;
@@ -293,7 +291,7 @@ function close() {
         intro.transition = '';
         intro.opacity = 1;
         dismiss.y = 0;
-        document.documentElement.style.overflow = previousOverflow;
+        unlockPageScroll();
         window.removeEventListener('keydown', onKeydown);
         window.removeEventListener('resize', onResize);
 
@@ -701,7 +699,7 @@ onBeforeUnmount(() => {
     window.removeEventListener('resize', onResize);
 
     if (isOpen.value) {
-        document.documentElement.style.overflow = previousOverflow;
+        unlockPageScroll();
     }
 });
 

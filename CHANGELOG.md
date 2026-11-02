@@ -2,6 +2,18 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.2] - 2026-11-02
+
+### Fixed
+
+- Opening the lightbox on a page with a scrollbar hid the scrollbar and shifted the page sideways. The
+  lightbox now holds the page scroll through the islands scroll lock, which keeps the scrollbar's
+  width reserved — and only when the page shows one. Requires `aaix/laravel-islands` 1.0.134.
+
+### Removed
+
+- The dark gradient over the gallery stage on hover.
+
 ## [1.0.1] - 2026-11-02
 
 ### Added

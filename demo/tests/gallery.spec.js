@@ -101,6 +101,26 @@ test.describe('lightbox', () => {
         await expect(caption(page)).toHaveText('Waterfall');
     });
 
+    test('keeps the page from shifting sideways when it has a scrollbar', async ({ page }) => {
+        await page.addStyleTag({ content: 'body { min-height: 3000px; }' });
+        const before = (await gallery(page).boundingBox()).x;
+
+        await openLightbox(page);
+
+        expect((await gallery(page).boundingBox()).x).toBe(before);
+        expect(await page.evaluate(() => document.documentElement.style.scrollbarGutter)).toBe('stable');
+
+        await closeLightbox(page);
+        expect(await page.evaluate(() => document.documentElement.style.scrollbarGutter)).toBe('');
+    });
+
+    test('reserves no gutter when the page has no scrollbar', async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 2000 });
+        await openLightbox(page);
+
+        expect(await page.evaluate(() => document.documentElement.style.scrollbarGutter)).toBe('');
+    });
+
     test('opens again after closing', async ({ page }) => {
         await openLightbox(page);
         await lightbox(page).getByRole('button', { name: 'Close' }).click();

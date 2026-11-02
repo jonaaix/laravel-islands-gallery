@@ -9,7 +9,7 @@ export default defineConfig({
     reporter: process.env.CI ? 'github' : 'list',
     use: {
         baseURL: `http://localhost:${port}`,
-        launchOptions: { executablePath: process.env.CHROME_PATH || undefined },
+        launchOptions: { executablePath: process.env.CHROME_PATH || undefined, ignoreDefaultArgs: ['--hide-scrollbars'] },
     },
     projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
     webServer: {
