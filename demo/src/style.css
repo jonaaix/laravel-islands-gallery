@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@import '@aaix/laravel-islands/css/theme.css';
+
+@source '../../resources/js';
+@source '../node_modules/@aaix/laravel-islands/resources/js/vue/helpers';
+
+@custom-variant dark (&:where(.dark, .dark *));

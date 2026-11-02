@@ -1,0 +1,36 @@
+<script setup>
+import { Gallery } from '@aaix/laravel-islands-gallery/vue';
+
+const photos = [
+    [1015, 'Fjord from above'],
+    [1018, 'Green ridge'],
+    [1036, 'Snowfield'],
+    [1039, 'Waterfall'],
+    [1043, 'Valley at noon'],
+    [1044, 'River in the mist'],
+    [1050, 'Coastline'],
+    [1067, 'City at dusk'],
+];
+
+const images = photos.map(([id, caption]) => ({
+    src: `https://picsum.photos/id/${id}/1500/1000`,
+    thumb: `https://picsum.photos/id/${id}/336/224`,
+    caption,
+}));
+</script>
+
+<template>
+    <main class="mx-auto max-w-3xl space-y-6 px-4 py-10">
+        <header class="space-y-1">
+            <h1 class="text-2xl font-bold tracking-tight">Laravel Islands Gallery</h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Click the image to open the lightbox.</p>
+        </header>
+
+        <Gallery id="gallery" :images="images" />
+
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+            Sample photos: <a class="underline" href="https://unsplash.com/license">Unsplash</a>, served by
+            <a class="underline" href="https://picsum.photos">Lorem Picsum</a>.
+        </p>
+    </main>
+</template>

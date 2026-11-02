@@ -176,6 +176,16 @@ const labels = computed(() => ({
 `:current`, `:total` and `:number` are filled in by the package. Keys you leave out keep their
 English fallback.
 
+## Demo
+
+`demo/` is a standalone page with the gallery and sample photos, no Laravel app needed:
+
+```bash
+cd demo
+npm install
+npm run dev
+```
+
 ## License
 
 [MIT](LICENSE.md)
