@@ -86,7 +86,7 @@ Every image is a plain object; only `src` is required.
 | --- | --- |
 | `src` | The full-size image, also what *open original* opens |
 | `thumb` | A small version for the thumbnail strip; falls back to `src` |
-| `caption` | Shown in the lightbox |
+| `caption` | Shown on the stage and in the lightbox |
 | `alt` | Alternative text; falls back to the caption |
 
 Map whatever your server sends into this shape in a `computed` — the components read no other keys.
@@ -106,6 +106,7 @@ Map whatever your server sends into this shape in a `computed` — the component
 | `loop` | `true` | Wrap from the last image to the first |
 | `thumbnails` | `true` | Strip below the stage |
 | `lightbox` | `true` | A click or tap on the stage opens the full-screen view |
+| `captions` | `true` | The current image's caption, bottom left on the stage |
 | `labels` | English | See [Wording](#wording) |
 
 Emits `change(index)` whenever another image comes to the front. The arrows appear on hover and

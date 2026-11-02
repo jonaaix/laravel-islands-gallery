@@ -37,6 +37,7 @@ other keys.
 | `loop` | `true` | Wrap from the last image to the first. |
 | `thumbnails` | `true` | Strip below the stage. |
 | `lightbox` | `true` | A click or tap on the stage opens the full-screen view. |
+| `captions` | `true` | The current image's caption, bottom left on the stage. |
 | `labels` | English | See *Wording*. |
 
 Emits `change(index)`. Arrows appear on hover (hidden on touch devices, where the stage swipes),

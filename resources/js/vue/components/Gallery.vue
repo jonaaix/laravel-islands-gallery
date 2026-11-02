@@ -17,6 +17,7 @@ const props = defineProps({
     loop: { type: Boolean, default: true },
     thumbnails: { type: Boolean, default: true },
     lightbox: { type: Boolean, default: true },
+    captions: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
 });
 
@@ -40,6 +41,8 @@ const slides = computed(() => [
     { position: 0, image: props.images[slider.index.value] ?? null },
     { position: 1, image: slider.nextIndex.value === null ? null : props.images[slider.nextIndex.value] },
 ]);
+
+const caption = computed(() => (props.captions ? props.images[slider.target.value]?.caption ?? '' : ''));
 
 const trackStyle = computed(() => ({
     transform: `translate3d(${slider.offset.value}px, 0, 0)`,
@@ -171,6 +174,13 @@ function onLightboxChange(index) {
                     </IconButton>
                 </div>
             </template>
+
+            <span
+                v-if="caption"
+                class="pointer-events-none absolute bottom-2 left-2 max-w-[calc(100%-5rem)] truncate rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
+            >
+                {{ caption }}
+            </span>
 
             <span
                 v-if="images.length > 1"
