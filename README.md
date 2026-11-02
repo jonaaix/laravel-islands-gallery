@@ -106,7 +106,7 @@ Map whatever your server sends into this shape in a `computed` — the component
 | `loop` | `true` | Wrap from the last image to the first |
 | `thumbnails` | `true` | Strip below the stage |
 | `lightbox` | `true` | A click or tap on the stage opens the full-screen view |
-| `captions` | `true` | The current image's caption, bottom left on the stage |
+| `captions` | `true` | The current image's caption, bottom centre on the stage |
 | `labels` | English | See [Wording](#wording) |
 
 Emits `change(index)` whenever another image comes to the front. The arrows appear on hover and

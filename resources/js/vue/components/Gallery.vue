@@ -180,7 +180,7 @@ function onLightboxChange(index) {
 
             <span
                 v-if="caption"
-                class="pointer-events-none absolute bottom-2 left-2 max-w-[calc(100%-5rem)] truncate rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
+                class="pointer-events-none absolute bottom-2 left-1/2 max-w-[calc(100%-10rem)] -translate-x-1/2 truncate rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
             >
                 {{ caption }}
             </span>
