@@ -218,6 +218,13 @@ npm install
 npm run dev
 ```
 
+The browser tests run against the same page and on every push:
+
+```bash
+npx playwright install chromium
+npm test
+```
+
 ## License
 
 [MIT](LICENSE.md)
