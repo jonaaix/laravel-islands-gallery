@@ -2,23 +2,24 @@
 import { Gallery } from '@aaix/laravel-islands-gallery/vue';
 
 const photos = [
-    [1015, 'Fjord from above'],
-    [1018, 'Green ridge'],
-    [1036, 'Snowfield'],
-    [1039, 'Waterfall'],
-    [1043, 'Valley at noon'],
-    [1044, 'River in the mist'],
-    [1050, 'Coastline'],
-    [1067, 'City at dusk'],
+    [1015, 'Fjord from above', 5000, 3333],
+    [1018, 'Green ridge', 3914, 2935],
+    [1036, 'Snowfield', 4608, 3072],
+    [1039, 'Waterfall', 5000, 3337],
+    [1043, 'Valley at noon', 5000, 3333],
+    [1044, 'River in the mist', 4032, 2268],
+    [1050, 'Coastline', 5000, 3333],
+    [1067, 'City at dusk', 5000, 3333],
 ];
 
 const slugOf = (caption) => caption.toLowerCase().replaceAll(' ', '-');
 
-const images = photos.map(([id, caption]) => ({
+const images = photos.map(([id, caption, width, height]) => ({
     src: `https://picsum.photos/id/${id}/1500/1000`,
     thumb: `https://picsum.photos/id/${id}/336/224`,
     caption,
     downloads: [
+        { label: `Original (${width} × ${height})`, src: `https://picsum.photos/id/${id}/${width}/${height}`, filename: `${slugOf(caption)}.jpg` },
         { label: 'Large (1500 × 1000)', src: `https://picsum.photos/id/${id}/1500/1000`, filename: `${slugOf(caption)}-large.jpg` },
         { label: 'Small (750 × 500)', src: `https://picsum.photos/id/${id}/750/500`, filename: `${slugOf(caption)}-small.jpg` },
     ],

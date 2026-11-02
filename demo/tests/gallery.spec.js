@@ -127,7 +127,7 @@ test.describe('download', () => {
         await lightbox(page).getByRole('button', { name: 'Download' }).click();
 
         const menu = lightbox(page).getByRole('menu');
-        await expect(menu.getByRole('menuitem')).toHaveText(['Large (1500 × 1000)', 'Small (750 × 500)']);
+        await expect(menu.getByRole('menuitem')).toHaveText(['Original (5000 × 3333)', 'Large (1500 × 1000)', 'Small (750 × 500)']);
 
         const [file] = await Promise.all([
             page.waitForEvent('download'),
