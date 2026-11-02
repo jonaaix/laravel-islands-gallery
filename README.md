@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://github.com/jonaaix/laravel-islands-gallery">
+    <img src="https://raw.githubusercontent.com/jonaaix/laravel-islands-gallery/main/laravel-islands-gallery.svg" alt="Laravel Islands Gallery Logo" width="200">
+  </a>
+</p>
+
 <h1 align="center">Laravel Islands Gallery</h1>
 
 <p align="center">
