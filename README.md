@@ -105,6 +105,10 @@ stay hidden on touch devices, where the stage swipes.
 
 ## Lightbox
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jonaaix/laravel-islands-gallery/main/assets/lightbox.webp" alt="The full-screen lightbox with toolbar, caption and thumbnail strip" width="720">
+</p>
+
 Use `Lightbox` alone when the trigger is something else — a table thumbnail, a button:
 
 ```vue
@@ -175,3 +179,5 @@ English fallback.
 ## License
 
 [MIT](LICENSE.md)
+
+Sample photos in the screenshots: [Unsplash](https://unsplash.com/license).
