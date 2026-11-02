@@ -159,6 +159,24 @@ The toolbar carries the counter, zoom, slideshow, fullscreen, download and close
 sits on the modal layer (z-index 70) and is rendered into `body`, so it also opens from inside a
 modal.
 
+### Open from anywhere
+
+`openLightbox` opens one shared lightbox without placing a component — for a photo in a table cell,
+a card or a list:
+
+```js
+import { openLightbox } from '@aaix/laravel-islands-gallery/vue';
+
+openLightbox(images, {
+    start: index,
+    origin: (position) => thumbs[position]?.getBoundingClientRect() ?? null,
+    labels,
+});
+```
+
+`start` is the image shown first; every other option is a `Lightbox` prop. The lightbox mounts on
+first use and is reused after that.
+
 ## Download
 
 The download button saves `src` under `filename`. To offer several sizes, give the image a

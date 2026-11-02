@@ -52,6 +52,10 @@ thumbnail, a button:
 <Lightbox v-model:index="openIndex" :images="images" :labels="labels" :origin="(index) => thumbs[index]?.getBoundingClientRect()" />
 ```
 
+Without a component in the template — a photo in a table cell, a card — call
+`openLightbox(images, { start, origin, labels })`; every option besides `start` is a `Lightbox` prop.
+One shared lightbox mounts on first use and is reused.
+
 `index` is `null` while closed; set it to open, the component writes it back on every step and
 emits `close`. `origin` is optional: return the on-screen rectangle of the clicked picture and the
 image zooms out of it on open and back into it on close.

@@ -2,6 +2,13 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.1] - 2026-11-02
+
+### Added
+
+- `openLightbox(images, options)` opens one shared lightbox from anywhere, without a component in
+  the template — the counterpart to a lightbox library's `show()`.
+
 ## [1.0.0] - 2026-11-02
 
 First release.

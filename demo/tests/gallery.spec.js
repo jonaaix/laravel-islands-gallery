@@ -121,6 +121,27 @@ test.describe('lightbox', () => {
     });
 });
 
+test.describe('openLightbox', () => {
+    test('opens the shared lightbox from a list and leaves the gallery alone', async ({ page }) => {
+        await page.getByRole('button', { name: 'Open Snowfield' }).click();
+
+        await expect(lightbox(page)).toBeVisible();
+        await expect(lightbox(page)).toContainText('3 / 8');
+
+        await closeLightbox(page);
+        await expect(counter(page)).toHaveText('1 / 8');
+    });
+
+    test('opens again on another picture', async ({ page }) => {
+        await page.getByRole('button', { name: 'Open Waterfall' }).click();
+        await expect(lightbox(page)).toContainText('4 / 8');
+        await closeLightbox(page);
+
+        await page.getByRole('button', { name: 'Open Coastline' }).click();
+        await expect(lightbox(page)).toContainText('7 / 8');
+    });
+});
+
 test.describe('download', () => {
     test('offers every size and saves the chosen one under its file name', async ({ page }) => {
         await openLightbox(page);

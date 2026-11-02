@@ -1,5 +1,6 @@
 <script setup>
-import { Gallery } from '@aaix/laravel-islands-gallery/vue';
+import { ref } from 'vue';
+import { Gallery, openLightbox } from '@aaix/laravel-islands-gallery/vue';
 
 const photos = [
     [1015, 'Fjord from above', 5000, 3333],
@@ -24,6 +25,16 @@ const images = photos.map(([id, caption, width, height]) => ({
         { label: 'Small (750 × 500)', src: `https://picsum.photos/id/${id}/750/500`, filename: `${slugOf(caption)}-small.jpg` },
     ],
 }));
+
+const thumbs = ref([]);
+
+function openFromList(index) {
+    openLightbox(images, {
+        start: index,
+        origin: (position) => thumbs.value[position]?.getBoundingClientRect() ?? null,
+        originRadius: 8,
+    });
+}
 </script>
 
 <template>
@@ -34,6 +45,23 @@ const images = photos.map(([id, caption, width, height]) => ({
         </header>
 
         <Gallery id="gallery" :images="images" />
+
+        <section class="space-y-2">
+            <h2 class="text-base font-semibold">Opened from a list</h2>
+            <div id="thumb-list" class="flex flex-wrap gap-2">
+                <button
+                    v-for="(image, index) in images"
+                    :key="image.src"
+                    :ref="(element) => (thumbs[index] = element)"
+                    type="button"
+                    :aria-label="`Open ${image.caption}`"
+                    class="cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-white/10"
+                    @click="openFromList(index)"
+                >
+                    <img :src="image.thumb" alt="" class="aspect-[3/2] h-16 w-auto object-cover" />
+                </button>
+            </div>
+        </section>
 
         <p class="text-xs text-gray-500 dark:text-gray-400">
             Sample photos: <a class="underline" href="https://unsplash.com/license">Unsplash</a>, served by
