@@ -2,11 +2,12 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { SLIDE_DURATION, SLIDE_EASING, useSlider } from '../composables/useSlider.js';
 import { DEFAULT_LABELS, format } from '../labels.js';
+import { downloadFile, filenameOf } from '../download.js';
 import IconChevronLeft from '../icons/IconChevronLeft.vue';
 import IconChevronRight from '../icons/IconChevronRight.vue';
+import IconDownload from '../icons/IconDownload.vue';
 import IconFullscreen from '../icons/IconFullscreen.vue';
 import IconFullscreenExit from '../icons/IconFullscreenExit.vue';
-import IconOpenOriginal from '../icons/IconOpenOriginal.vue';
 import IconPause from '../icons/IconPause.vue';
 import IconPlay from '../icons/IconPlay.vue';
 import IconXMark from '../icons/IconXMark.vue';
@@ -24,6 +25,7 @@ const props = defineProps({
     slideshowInterval: { type: Number, default: 4000 },
     maxZoom: { type: Number, default: 4 },
     originRadius: { type: Number, default: 12 },
+    downloadable: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
 });
 
@@ -58,6 +60,62 @@ const slider = useSlider({
 });
 
 const current = computed(() => props.images[slider.index.value] ?? null);
+
+const downloads = computed(() => {
+    const image = current.value;
+
+    if (!props.downloadable || !image) {
+        return [];
+    }
+
+    const entries = image.downloads?.length ? image.downloads : [{ src: image.src }];
+
+    return entries.map((entry) => ({
+        label: entry.label ?? '',
+        src: entry.src,
+        filename: entry.filename ?? image.filename ?? filenameOf(entry.src),
+    }));
+});
+
+const downloadButton = ref(null);
+const downloadMenu = ref(null);
+const downloadMenuOpen = ref(false);
+const downloading = ref(false);
+
+async function download(entry) {
+    downloadMenuOpen.value = false;
+    downloading.value = true;
+
+    try {
+        await downloadFile(entry.src, entry.filename);
+    } finally {
+        downloading.value = false;
+    }
+}
+
+function onDownloadClick() {
+    if (downloads.value.length > 1) {
+        downloadMenuOpen.value = !downloadMenuOpen.value;
+    } else {
+        download(downloads.value[0]);
+    }
+}
+
+function closeDownloadMenuOutside(event) {
+    if (!downloadButton.value?.contains(event.target) && !downloadMenu.value?.contains(event.target)) {
+        downloadMenuOpen.value = false;
+    }
+}
+
+watch(downloadMenuOpen, (open) => {
+    if (open) {
+        window.addEventListener('pointerdown', closeDownloadMenuOutside, true);
+    } else {
+        window.removeEventListener('pointerdown', closeDownloadMenuOutside, true);
+    }
+});
+
+watch(() => slider.index.value, () => (downloadMenuOpen.value = false));
 const zoomed = computed(() => zoom.scale > 1.01);
 const dismissProgress = computed(() => Math.min(1, Math.abs(dismiss.y) / (CLOSE_DISTANCE * 2.5)));
 const slides = computed(() => [
@@ -209,6 +267,7 @@ function close() {
     }
 
     stopSlideshow();
+    downloadMenuOpen.value = false;
     closing.value = true;
     const end = currentImage ? fromOrigin(currentImage) : null;
 
@@ -585,7 +644,15 @@ function onKeydown(event) {
     const actions = {
         ArrowLeft: previous,
         ArrowRight: next,
-        Escape: () => (zoomed.value ? resetZoom() : close()),
+        Escape: () => {
+            if (downloadMenuOpen.value) {
+                downloadMenuOpen.value = false;
+            } else if (zoomed.value) {
+                resetZoom();
+            } else {
+                close();
+            }
+        },
         '+': () => zoomTo(zoom.scale * 1.5),
         '=': () => zoomTo(zoom.scale * 1.5),
         '-': () => zoomTo(zoom.scale / 1.5),
@@ -627,6 +694,7 @@ function trapFocus(event) {
 
 onBeforeUnmount(() => {
     stopSlideshow();
+    window.removeEventListener('pointerdown', closeDownloadMenuOutside, true);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     window.removeEventListener('keydown', onKeydown);
     window.removeEventListener('resize', onResize);
@@ -717,13 +785,43 @@ defineExpose({ close });
                         <IconFullscreenExit v-if="fullscreen" />
                         <IconFullscreen v-else />
                     </IconButton>
-                    <IconButton v-if="current" :label="text.openOriginal" :href="current.src" tone="plain" size="lg" class="ilg-tool">
-                        <IconOpenOriginal />
-                    </IconButton>
+                    <span v-if="downloads.length" ref="downloadButton">
+                        <IconButton
+                            :label="text.download"
+                            tone="plain"
+                            size="lg"
+                            class="ilg-tool"
+                            :disabled="downloading"
+                            :aria-haspopup="downloads.length > 1 ? 'menu' : undefined"
+                            :aria-expanded="downloads.length > 1 ? downloadMenuOpen : undefined"
+                            @click="onDownloadClick"
+                        >
+                            <IconDownload />
+                        </IconButton>
+                    </span>
                     <span class="mx-0.5 h-5 w-px bg-white/15" aria-hidden="true" />
                     <IconButton :label="text.close" tone="plain" size="lg" class="ilg-tool" @click="close()">
                         <IconXMark />
                     </IconButton>
+                </div>
+
+                <div
+                    v-if="downloadMenuOpen"
+                    ref="downloadMenu"
+                    class="ilg-island absolute right-3 top-full min-w-44 rounded-2xl p-1 sm:right-4"
+                    role="menu"
+                    :aria-label="text.download"
+                >
+                    <button
+                        v-for="entry in downloads"
+                        :key="entry.src"
+                        type="button"
+                        role="menuitem"
+                        class="ilg-tool flex h-9 w-full items-center whitespace-nowrap rounded-xl px-3 text-start text-sm"
+                        @click="download(entry)"
+                    >
+                        {{ entry.label }}
+                    </button>
                 </div>
             </div>
 

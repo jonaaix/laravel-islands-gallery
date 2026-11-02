@@ -84,10 +84,12 @@ Every image is a plain object; only `src` is required.
 
 | Key | |
 | --- | --- |
-| `src` | The full-size image, also what *open original* opens |
+| `src` | The full-size image, also what the download saves |
 | `thumb` | A small version for the thumbnail strip; falls back to `src` |
 | `caption` | Shown on the stage and in the lightbox |
 | `alt` | Alternative text; falls back to the caption |
+| `filename` | Name of the saved file; falls back to the last part of the URL |
+| `downloads` | Sizes to choose from, see [Download](#download) |
 
 Map whatever your server sends into this shape in a `computed` — the components read no other keys.
 
@@ -107,6 +109,7 @@ Map whatever your server sends into this shape in a `computed` — the component
 | `thumbnails` | `true` | Strip below the stage |
 | `lightbox` | `true` | A click or tap on the stage opens the full-screen view |
 | `captions` | `true` | The current image's caption, bottom centre on the stage |
+| `downloadable` | `true` | Download button in the lightbox |
 | `labels` | English | See [Wording](#wording) |
 
 Emits `change(index)` whenever another image comes to the front. The arrows appear on hover and
@@ -138,6 +141,7 @@ emits `close`.
 | `thumbnails` | `true` | Strip along the bottom |
 | `slideshowInterval` | `4000` | Milliseconds per image in the slideshow |
 | `maxZoom` | `4` | Largest zoom factor |
+| `downloadable` | `true` | Download button in the toolbar |
 | `labels` | English | See [Wording](#wording) |
 
 | Input | Effect |
@@ -151,9 +155,31 @@ emits `close`.
 | Tap | Hide or show the controls |
 | <kbd>Space</kbd> | Start or pause the slideshow |
 
-The toolbar carries the counter, zoom, slideshow, fullscreen, *open original* and close. The
-lightbox sits on the modal layer (z-index 70) and is rendered into `body`, so it also opens from
-inside a modal.
+The toolbar carries the counter, zoom, slideshow, fullscreen, download and close. The lightbox
+sits on the modal layer (z-index 70) and is rendered into `body`, so it also opens from inside a
+modal.
+
+## Download
+
+The download button saves `src` under `filename`. To offer several sizes, give the image a
+`downloads` list — the button then opens a menu with one entry per size:
+
+```js
+{
+    src: 'https://…/1500.jpg',
+    filename: 'die-cutter-front.jpg',
+    downloads: [
+        { label: t('Original'), src: 'https://…/original.jpg', filename: 'die-cutter-front.jpg' },
+        { label: t('Web (1500 px)'), src: 'https://…/1500.jpg', filename: 'die-cutter-front-1500.jpg' },
+    ],
+}
+```
+
+An entry without `filename` takes the image's. Name files after the record, not the position, so
+two downloads never collide.
+
+The file is fetched and saved in place. When the server refuses that — another domain without CORS
+headers — the browser opens the image in a new tab instead, where it can still be saved by hand.
 
 ## Wording
 
@@ -174,7 +200,7 @@ const labels = computed(() => ({
     pause: t('Pause slideshow'),
     fullscreen: t('Full screen'),
     exitFullscreen: t('Exit full screen'),
-    openOriginal: t('Open original'),
+    download: t('Download'),
 }));
 ```
 

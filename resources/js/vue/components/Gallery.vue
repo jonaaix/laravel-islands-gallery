@@ -18,6 +18,7 @@ const props = defineProps({
     thumbnails: { type: Boolean, default: true },
     lightbox: { type: Boolean, default: true },
     captions: { type: Boolean, default: true },
+    downloadable: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
 });
 
@@ -213,6 +214,7 @@ function onLightboxChange(index) {
             :index="lightboxIndex"
             :origin="originOf"
             :loop="loop"
+            :downloadable="downloadable"
             :labels="labels"
             @update:index="onLightboxChange"
             @close="lightboxIndex = null"

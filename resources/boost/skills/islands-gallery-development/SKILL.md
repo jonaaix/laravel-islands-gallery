@@ -16,7 +16,7 @@ import { Gallery, Lightbox } from '@aaix/laravel-islands-gallery/vue';
 Every image is a plain object; only `src` is required.
 
 ```js
-{ src: 'https://…/full.jpg', thumb: 'https://…/336.jpg', caption: 'Front view', alt: 'Die cutter, front' }
+{ src: 'https://…/full.jpg', thumb: 'https://…/336.jpg', caption: 'Front view', alt: 'Die cutter, front', filename: 'die-cutter-front.jpg' }
 ```
 
 Map whatever the server sends into this shape in a `computed` — the components never read
@@ -59,9 +59,25 @@ image zooms out of it on open and back into it on close.
 Controls: ← → and swipe step through, a click or double tap zooms at the pointer, the wheel and
 two fingers zoom continuously, a zoomed image pans by dragging, Esc first unzooms then closes,
 dragging down closes on touch, a tap hides the chrome, Space toggles the slideshow. The toolbar
-carries counter, zoom, slideshow, fullscreen, *open original* and close.
+carries counter, zoom, slideshow, fullscreen, download and close.
 
-Further props: `loop`, `thumbnails`, `slideshowInterval` (ms, default 4000), `maxZoom` (default 4).
+Further props: `loop`, `thumbnails`, `slideshowInterval` (ms, default 4000), `maxZoom` (default 4),
+`downloadable` (default `true`, also on `Gallery`).
+
+## Download
+
+The button saves `src` under `filename` (falls back to the URL's last segment). Several sizes go
+in `downloads` and turn the button into a menu:
+
+```js
+{ src, filename: 'die-cutter-front.jpg', downloads: [
+    { label: t('Original'), src: originalUrl, filename: 'die-cutter-front.jpg' },
+    { label: t('Web (1500 px)'), src: webUrl, filename: 'die-cutter-front-1500.jpg' },
+] }
+```
+
+Name files after the record, never the position. Files on another domain need CORS headers to be
+saved in place; without them the browser opens the image in a new tab.
 
 ## Wording
 
@@ -73,7 +89,7 @@ const labels = computed(() => ({
     dialog: t('Image viewer'), counter: t(':current / :total'), image: t('Image :number'), open: t('Open image'),
     previous: t('Previous image'), next: t('Next image'), close: t('Close'), zoomIn: t('Zoom in'), zoomOut: t('Zoom out'),
     play: t('Start slideshow'), pause: t('Pause slideshow'), fullscreen: t('Full screen'),
-    exitFullscreen: t('Exit full screen'), openOriginal: t('Open original'),
+    exitFullscreen: t('Exit full screen'), download: t('Download'),
 }));
 ```
 

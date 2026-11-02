@@ -12,10 +12,16 @@ const photos = [
     [1067, 'City at dusk'],
 ];
 
+const slugOf = (caption) => caption.toLowerCase().replaceAll(' ', '-');
+
 const images = photos.map(([id, caption]) => ({
     src: `https://picsum.photos/id/${id}/1500/1000`,
     thumb: `https://picsum.photos/id/${id}/336/224`,
     caption,
+    downloads: [
+        { label: 'Large (1500 × 1000)', src: `https://picsum.photos/id/${id}/1500/1000`, filename: `${slugOf(caption)}-large.jpg` },
+        { label: 'Small (750 × 500)', src: `https://picsum.photos/id/${id}/750/500`, filename: `${slugOf(caption)}-small.jpg` },
+    ],
 }));
 </script>
 

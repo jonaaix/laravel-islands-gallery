@@ -12,7 +12,7 @@ export const DEFAULT_LABELS = {
     pause: 'Pause slideshow',
     fullscreen: 'Full screen',
     exitFullscreen: 'Exit full screen',
-    openOriginal: 'Open original',
+    download: 'Download',
 };
 
 export function format(template, values) {
