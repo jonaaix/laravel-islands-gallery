@@ -124,7 +124,10 @@ function originOf() {
 
 function onLightboxChange(index) {
     lightboxIndex.value = index;
-    slider.reset(index);
+
+    if (index !== null) {
+        slider.reset(index);
+    }
 }
 </script>
 
