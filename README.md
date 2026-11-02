@@ -16,6 +16,10 @@ An image gallery for <a href="https://github.com/jonaaix/laravel-islands">Larave
   <a href="https://github.com/jonaaix/laravel-islands-gallery/blob/main/LICENSE.md"><img src="https://img.shields.io/packagist/l/aaix/laravel-islands-gallery.svg?style=flat-square" alt="License"></a>
 </p>
 
+<p align="center">
+  <a href="https://jonaaix.github.io/laravel-islands-gallery/"><strong>Live demo</strong></a>
+</p>
+
 ---
 
 <p align="center">
@@ -178,7 +182,8 @@ English fallback.
 
 ## Demo
 
-`demo/` is a standalone page with the gallery and sample photos, no Laravel app needed:
+`demo/` is a standalone page with the gallery and sample photos, no Laravel app needed. Every push
+to `main` publishes it as the [live demo](https://jonaaix.github.io/laravel-islands-gallery/). To run it locally:
 
 ```bash
 cd demo
