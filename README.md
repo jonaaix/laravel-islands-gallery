@@ -22,6 +22,10 @@ An image gallery for <a href="https://github.com/jonaaix/laravel-islands">Larave
   <img src="https://raw.githubusercontent.com/jonaaix/laravel-islands-gallery/main/assets/gallery.webp" alt="The inline gallery with arrows, counter and thumbnail strip" width="720">
 </p>
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jonaaix/laravel-islands-gallery/main/assets/lightbox.webp" alt="The full-screen lightbox with toolbar, caption and thumbnail strip" width="720">
+</p>
+
 Two Vue components share one image list. `Gallery` sits in the page; `Lightbox` takes over the
 screen. The gallery brings its own lightbox, and the lightbox also works alone, opened from
 anything you like.
@@ -104,10 +108,6 @@ Emits `change(index)` whenever another image comes to the front. The arrows appe
 stay hidden on touch devices, where the stage swipes.
 
 ## Lightbox
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/jonaaix/laravel-islands-gallery/main/assets/lightbox.webp" alt="The full-screen lightbox with toolbar, caption and thumbnail strip" width="720">
-</p>
 
 Use `Lightbox` alone when the trigger is something else — a table thumbnail, a button:
 
