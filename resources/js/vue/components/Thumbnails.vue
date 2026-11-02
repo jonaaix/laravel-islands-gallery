@@ -36,8 +36,8 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
             class="relative shrink-0 overflow-hidden rounded-md transition duration-200 ease-out focus-visible:outline-none"
             :class="[
                 tone === 'overlay'
-                    ? position === index ? 'opacity-100 ring-2 ring-white' : 'opacity-45 ring-1 ring-white/10 hover:opacity-80'
-                    : position === index ? 'opacity-100 ring-2 ring-il-primary-500 dark:ring-il-primary-400' : 'opacity-60 ring-1 ring-black/5 hover:opacity-100 dark:ring-white/10',
+                    ? position === index ? 'ring-2 ring-white' : 'ring-1 ring-white/10 hover:ring-white/50'
+                    : position === index ? 'ring-2 ring-il-primary-500 dark:ring-il-primary-400' : 'ring-1 ring-black/5 hover:ring-il-primary-300 dark:ring-white/10 dark:hover:ring-white/40',
                 'focus-visible:ring-2 focus-visible:ring-il-primary-400',
             ]"
             @click="emit('select', position)"

@@ -2,6 +2,13 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.3] - 2026-11-02
+
+### Changed
+
+- Thumbnails that are not the current image are no longer dimmed; the current one is marked by its
+  ring alone, so every picture shows at full brightness.
+
 ## [1.0.2] - 2026-11-02
 
 ### Fixed

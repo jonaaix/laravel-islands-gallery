@@ -1,6 +1,6 @@
 {
     "name": "@aaix/laravel-islands-gallery",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "An image gallery for Laravel Islands: an inline carousel with thumbnails and a lightbox with zoom, pan, swipe and keyboard control.",
     "type": "module",
     "license": "MIT",
