@@ -10,6 +10,7 @@ import IconFullscreen from '../icons/IconFullscreen.vue';
 import IconFullscreenExit from '../icons/IconFullscreenExit.vue';
 import IconPause from '../icons/IconPause.vue';
 import IconPlay from '../icons/IconPlay.vue';
+import IconSpinner from '../icons/IconSpinner.vue';
 import IconXMark from '../icons/IconXMark.vue';
 import IconZoomIn from '../icons/IconZoomIn.vue';
 import IconZoomOut from '../icons/IconZoomOut.vue';
@@ -792,11 +793,13 @@ defineExpose({ close });
                             size="lg"
                             class="ilg-tool"
                             :disabled="downloading"
+                            :aria-busy="downloading"
                             :aria-haspopup="downloads.length > 1 ? 'menu' : undefined"
                             :aria-expanded="downloads.length > 1 ? downloadMenuOpen : undefined"
                             @click="onDownloadClick"
                         >
-                            <IconDownload />
+                            <IconSpinner v-if="downloading" />
+                            <IconDownload v-else />
                         </IconButton>
                     </span>
                     <span class="mx-0.5 h-5 w-px bg-white/15" aria-hidden="true" />

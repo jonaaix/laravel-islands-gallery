@@ -138,6 +138,32 @@ test.describe('download', () => {
         await expect(menu).toBeHidden();
     });
 
+    test('shows a spinner on the button while the file loads', async ({ page }) => {
+        let release;
+        const held = new Promise((resolve) => (release = resolve));
+
+        await page.route('https://picsum.photos/id/1015/5000/3333', async (route) => {
+            await held;
+
+            return route.fulfill({ contentType: 'image/jpeg', headers: { 'access-control-allow-origin': '*' }, body: 'jpeg' });
+        });
+
+        await openLightbox(page);
+        const button = lightbox(page).getByRole('button', { name: 'Download' });
+        await button.click();
+        await lightbox(page).getByRole('menuitem', { name: 'Original (5000 × 3333)' }).click();
+
+        await expect(button).toHaveAttribute('aria-busy', 'true');
+        await expect(button.locator('.animate-spin')).toBeVisible();
+
+        const download = page.waitForEvent('download');
+        release();
+        expect((await download).suggestedFilename()).toBe('fjord-from-above.jpg');
+
+        await expect(button).toHaveAttribute('aria-busy', 'false');
+        await expect(button.locator('.animate-spin')).toHaveCount(0);
+    });
+
     test('closes the menu on Escape and keeps the lightbox open', async ({ page }) => {
         await openLightbox(page);
         await lightbox(page).getByRole('button', { name: 'Download' }).click();
