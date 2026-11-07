@@ -1,8 +1,10 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { SLIDE_DURATION, SLIDE_EASING, useSlider } from '../composables/useSlider.js';
-import { DEFAULT_LABELS, format } from '../labels.js';
+import { useVideo } from '../composables/useVideo.js';
+import { DEFAULT_LABELS, format, itemLabel } from '../labels.js';
 import { downloadFile, filenameOf } from '../download.js';
+import { firstFrame, isVideo, stillOf } from '../media.js';
 import IconChevronLeft from '../icons/IconChevronLeft.vue';
 import IconChevronRight from '../icons/IconChevronRight.vue';
 import IconDownload from '../icons/IconDownload.vue';
@@ -16,6 +18,7 @@ import IconZoomIn from '../icons/IconZoomIn.vue';
 import IconZoomOut from '../icons/IconZoomOut.vue';
 import { IconButton, lockPageScroll, unlockPageScroll } from '@aaix/laravel-islands/vue/helpers';
 import Thumbnails from './Thumbnails.vue';
+import VideoControls from './VideoControls.vue';
 
 const props = defineProps({
     images: { type: Array, required: true },
@@ -27,6 +30,7 @@ const props = defineProps({
     maxZoom: { type: Number, default: 4 },
     originRadius: { type: Number, default: 12 },
     downloadable: { type: Boolean, default: true },
+    autoplay: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
 });
 
@@ -36,12 +40,13 @@ const MIN_DRAG = 8;
 const CLOSE_DISTANCE = 120;
 const DOUBLE_TAP_MS = 280;
 const CLOSE_DURATION = 250;
+const IDLE_MS = 2500;
 
 const text = computed(() => ({ ...DEFAULT_LABELS, ...props.labels }));
 const root = ref(null);
 const stage = ref(null);
 const track = ref(null);
-let currentImage = null;
+let currentMedia = null;
 const isOpen = ref(false);
 const isVisible = ref(false);
 const stageWidth = ref(0);
@@ -61,6 +66,9 @@ const slider = useSlider({
 });
 
 const current = computed(() => props.images[slider.index.value] ?? null);
+const currentIsVideo = computed(() => isVideo(current.value));
+const targetIsVideo = computed(() => isVideo(props.images[slider.target.value]));
+const video = useVideo({ onEnded: onVideoEnded });
 
 const downloads = computed(() => {
     const image = current.value;
@@ -140,13 +148,22 @@ const currentStyle = computed(() => {
     return {
         transform: `translate3d(${zoom.x}px, ${zoom.y + dismiss.y}px, 0) scale(${zoom.scale * dismissScale})`,
         transition: zoom.animate || dismiss.animate ? `transform ${SLIDE_DURATION}ms ${SLIDE_EASING}` : intro.transition,
-        cursor: zoomed.value ? 'grab' : 'zoom-in',
+        cursor: currentIsVideo.value ? (chromeHidden.value ? 'none' : 'pointer') : zoomed.value ? 'grab' : 'zoom-in',
     };
 });
 
 const showThumbnails = computed(() => props.thumbnails && props.images.length > 1);
 const chromeVisible = computed(() => isVisible.value && !chromeHidden.value && dismiss.y === 0);
+const showPlayButton = computed(() => currentIsVideo.value && !video.playing && isVisible.value && !closing.value && dismiss.y === 0 && !intro.transform);
 const chromeClass = computed(() => (chromeVisible.value ? 'opacity-100 transition-opacity duration-200' : 'opacity-0 transition-opacity duration-150 [&_*]:pointer-events-none!'));
+
+function slidePadding(item) {
+    if (item && isVideo(item)) {
+        return showThumbnails.value ? 'pb-46 sm:pb-50' : 'pb-30';
+    }
+
+    return showThumbnails.value ? 'pb-32 sm:pb-36' : 'pb-16';
+}
 
 function arrowClass(neighbour) {
     return chromeVisible.value && !zoomed.value && neighbour !== null ? 'opacity-100' : 'pointer-events-none opacity-0';
@@ -210,11 +227,12 @@ async function animateIn() {
     await nextTick();
     measure();
 
-    const image = currentImage;
+    const image = currentMedia;
+    const isVideoElement = image?.tagName === 'VIDEO';
 
-    if (image && !image.complete) {
+    if (image && !(isVideoElement ? image.readyState >= 1 : image.complete)) {
         await new Promise((resolve) => {
-            image.addEventListener('load', resolve, { once: true });
+            image.addEventListener(isVideoElement ? 'loadedmetadata' : 'load', resolve, { once: true });
             image.addEventListener('error', resolve, { once: true });
             setTimeout(resolve, 400);
         });
@@ -251,6 +269,15 @@ function open(index) {
     window.addEventListener('keydown', onKeydown);
     window.addEventListener('resize', onResize);
     animateIn().then(() => root.value?.focus({ preventScroll: true }));
+    arriveAt(slider.index.value);
+}
+
+function arriveAt(index) {
+    const item = props.images[index];
+
+    if (isVideo(item) && (props.autoplay || playing.value)) {
+        video.queuePlay(item.src);
+    }
 }
 
 function close() {
@@ -266,9 +293,11 @@ function close() {
     }
 
     stopSlideshow();
+    video.pause();
+    clearTimeout(idleTimer);
     downloadMenuOpen.value = false;
     closing.value = true;
-    const end = currentImage ? fromOrigin(currentImage) : null;
+    const end = currentMedia ? fromOrigin(currentMedia) : null;
 
     intro.transition = 'none';
     intro.transform = restingTransform();
@@ -325,15 +354,25 @@ watch(slider.index, (index) => {
         emit('update:index', index);
     }
 
+    if (isOpen.value) {
+        arriveAt(index);
+    }
+
     preload(index);
+});
+
+watch(slider.target, (target) => {
+    if (target !== slider.index.value) {
+        video.pause();
+    }
 });
 
 function preload(index) {
     for (const delta of [-1, 1]) {
-        const image = props.images[slider.wrap(index + delta)];
+        const still = stillOf(props.images[slider.wrap(index + delta)]);
 
-        if (image) {
-            new Image().src = image.src;
+        if (still) {
+            new Image().src = still;
         }
     }
 }
@@ -353,7 +392,7 @@ function resetZoom(animate = true) {
 }
 
 function bounds(scale) {
-    const image = currentImage;
+    const image = currentMedia;
     const box = stage.value?.getBoundingClientRect();
 
     if (!image || !box) {
@@ -382,6 +421,10 @@ function clampPan(scale, x, y, give = 0) {
 }
 
 function zoomTo(scale, clientX, clientY, animate = true) {
+    if (currentIsVideo.value) {
+        return;
+    }
+
     const box = stage.value.getBoundingClientRect();
     const next = Math.min(props.maxZoom, Math.max(1, scale));
     const px = (clientX ?? box.left + box.width / 2) - (box.left + box.width / 2);
@@ -431,7 +474,7 @@ function onPointerDown(event) {
 
     if (pointers.size === 2) {
         const [a, b] = [...pointers.values()];
-        gesture = { type: 'pinch', distance: distance(a, b), scale: zoom.scale, mid: midpoint(a, b), x: zoom.x, y: zoom.y };
+        gesture = currentIsVideo.value ? null : { type: 'pinch', distance: distance(a, b), scale: zoom.scale, mid: midpoint(a, b), x: zoom.x, y: zoom.y };
         slider.release(0, 0);
 
         return;
@@ -452,7 +495,7 @@ function onPointerDown(event) {
         lastTime: performance.now(),
         velocityX: 0,
         velocityY: 0,
-        onImage: event.target === currentImage,
+        onImage: event.target === currentMedia,
         pointerType: event.pointerType,
     };
 }
@@ -563,7 +606,9 @@ function handleTap(event, tap) {
     lastTap = { time: isDouble ? 0 : now, x: event.clientX, y: event.clientY };
 
     if (tap.pointerType === 'mouse') {
-        if (tap.onImage) {
+        if (tap.onImage && currentIsVideo.value) {
+            video.toggle();
+        } else if (tap.onImage) {
             toggleZoom(event.clientX, event.clientY);
         } else if (!zoomed.value) {
             close();
@@ -581,8 +626,59 @@ function handleTap(event, tap) {
     setTimeout(() => {
         if (lastTap.time === now) {
             chromeHidden.value = !chromeHidden.value;
+
+            if (!chromeHidden.value) {
+                wakeChrome();
+            }
         }
     }, DOUBLE_TAP_MS);
+}
+
+// ----- Video -----
+
+let idleTimer = null;
+
+function wakeChrome() {
+    clearTimeout(idleTimer);
+    chromeHidden.value = false;
+
+    if (video.playing) {
+        idleTimer = setTimeout(hideIdleChrome, IDLE_MS);
+    }
+}
+
+function hideIdleChrome() {
+    const inUse = root.value?.querySelector('.ilg-island:hover, .ilg-island :focus-visible');
+
+    if (video.playing && currentIsVideo.value && !inUse) {
+        chromeHidden.value = true;
+    }
+}
+
+function onRootPointerMove(event) {
+    if (event.pointerType === 'mouse' && video.playing) {
+        wakeChrome();
+    }
+}
+
+watch(() => video.playing, (isPlaying) => {
+    if (isPlaying) {
+        wakeChrome();
+    } else {
+        clearTimeout(idleTimer);
+        chromeHidden.value = false;
+    }
+});
+
+function onVideoEnded() {
+    if (playing.value) {
+        advanceSlideshow();
+    }
+}
+
+function bindMedia(element) {
+    currentMedia = element;
+    video.bind(element?.tagName === 'VIDEO' ? element : null);
 }
 
 // ----- Navigation, slideshow, fullscreen -----
@@ -600,22 +696,35 @@ function next() {
 let slideshowTimer = null;
 const slideshowKey = ref(0);
 
+function scheduleSlide() {
+    clearTimeout(slideshowTimer);
+    slideshowKey.value++;
+
+    if (!targetIsVideo.value) {
+        slideshowTimer = setTimeout(advanceSlideshow, props.slideshowInterval);
+    }
+}
+
+function advanceSlideshow() {
+    if (slider.step(1)) {
+        scheduleSlide();
+    } else {
+        stopSlideshow();
+    }
+}
+
 function startSlideshow() {
     playing.value = true;
-    slideshowKey.value++;
-    clearInterval(slideshowTimer);
-    slideshowTimer = setInterval(() => {
-        if (!slider.step(1)) {
-            stopSlideshow();
-        }
+    scheduleSlide();
 
-        slideshowKey.value++;
-    }, props.slideshowInterval);
+    if (currentIsVideo.value && !video.playing) {
+        video.play();
+    }
 }
 
 function stopSlideshow() {
     playing.value = false;
-    clearInterval(slideshowTimer);
+    clearTimeout(slideshowTimer);
 }
 
 function toggleSlideshow() {
@@ -655,7 +764,10 @@ function onKeydown(event) {
         '+': () => zoomTo(zoom.scale * 1.5),
         '=': () => zoomTo(zoom.scale * 1.5),
         '-': () => zoomTo(zoom.scale / 1.5),
-        ' ': toggleSlideshow,
+        ' ': currentIsVideo.value ? video.toggle : toggleSlideshow,
+        ...(currentIsVideo.value && !event.ctrlKey && !event.metaKey && !event.altKey
+            ? { k: video.toggle, K: video.toggle, m: video.toggleMute, M: video.toggleMute }
+            : {}),
     };
 
     if (event.key === 'Tab') {
@@ -693,6 +805,7 @@ function trapFocus(event) {
 
 onBeforeUnmount(() => {
     stopSlideshow();
+    clearTimeout(idleTimer);
     window.removeEventListener('pointerdown', closeDownloadMenuOutside, true);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     window.removeEventListener('keydown', onKeydown);
@@ -712,10 +825,12 @@ defineExpose({ close });
             v-if="isOpen"
             ref="root"
             class="ilg-lightbox fixed inset-0 z-[70] overflow-hidden text-white outline-none select-none"
+            :class="chromeHidden && video.playing ? 'cursor-none' : ''"
             role="dialog"
             tabindex="-1"
             aria-modal="true"
             :aria-label="text.dialog"
+            @pointermove="onRootPointerMove"
         >
             <div
                 class="absolute inset-0 bg-neutral-950/95 backdrop-blur-2xl ease-out"
@@ -736,12 +851,25 @@ defineExpose({ close });
                         v-for="slide in slides"
                         :key="slide.position"
                         class="absolute inset-0 flex items-center justify-center px-3 pt-16 sm:px-20 sm:pt-20"
-                        :class="showThumbnails ? 'pb-32 sm:pb-36' : 'pb-16'"
+                        :class="slidePadding(slide.image)"
                         :style="{ transform: `translate3d(${slide.position * 100}%, 0, 0)` }"
                     >
+                        <video
+                            v-if="slide.image && slide.position === 0 && isVideo(slide.image)"
+                            :ref="bindMedia"
+                            :key="slide.image.src"
+                            :src="slide.image.src"
+                            :poster="slide.image.poster"
+                            :aria-label="slide.image.alt ?? slide.image.caption ?? undefined"
+                            preload="metadata"
+                            playsinline
+                            class="ilg-image ilg-video max-h-full max-w-full rounded-lg bg-black object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)] will-change-transform"
+                            :style="currentStyle"
+                            v-on="video.listeners"
+                        />
                         <img
-                            v-if="slide.image && slide.position === 0"
-                            :ref="(element) => (currentImage = element)"
+                            v-else-if="slide.image && slide.position === 0"
+                            :ref="bindMedia"
                             :key="slide.image.src"
                             :src="slide.image.src"
                             :alt="slide.image.alt ?? slide.image.caption ?? ''"
@@ -750,19 +878,43 @@ defineExpose({ close });
                             :style="currentStyle"
                         />
                         <img
-                            v-else-if="slide.image"
+                            v-else-if="slide.image && stillOf(slide.image)"
                             :key="slide.image.src"
-                            :src="slide.image.src"
+                            :src="stillOf(slide.image)"
                             alt=""
                             draggable="false"
                             class="max-h-full max-w-full rounded-lg object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)]"
                             :style="{ opacity: isVisible ? 0.9 : 0 }"
                         />
+                        <video
+                            v-else-if="slide.image"
+                            :key="slide.image.src"
+                            :src="firstFrame(slide.image.src)"
+                            preload="metadata"
+                            muted
+                            playsinline
+                            aria-hidden="true"
+                            class="max-h-full max-w-full rounded-lg bg-black object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)]"
+                            :style="{ opacity: isVisible ? 0.9 : 0 }"
+                        />
+
+                        <div
+                            v-if="slide.position === 0 && currentIsVideo"
+                            class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 pt-16 sm:px-20 sm:pt-20"
+                            :class="slidePadding(slide.image)"
+                        >
+                            <IconButton v-if="showPlayButton" :label="text.playVideo" tone="plain" size="xl" class="ilg-arrow pointer-events-auto" @pointerdown.stop @click="video.play()">
+                                <IconPlay />
+                            </IconButton>
+                            <span v-else-if="video.waiting && video.playing" class="size-10 text-white/80">
+                                <IconSpinner />
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div v-if="playing" :key="slideshowKey" class="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 bg-white/10">
+            <div v-if="playing && !targetIsVideo" :key="slideshowKey" class="pointer-events-none absolute inset-x-0 top-0 z-30 h-0.5 bg-white/10">
                 <div class="ilg-progress h-full bg-white/70" :style="{ animationDuration: `${slideshowInterval}ms` }" />
             </div>
 
@@ -772,7 +924,7 @@ defineExpose({ close });
                 </span>
 
                 <div class="ilg-island flex items-center gap-0.5 rounded-full p-1">
-                    <IconButton :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleZoom()">
+                    <IconButton v-if="!currentIsVideo" :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleZoom()">
                         <IconZoomOut v-if="zoomed" />
                         <IconZoomIn v-else />
                     </IconButton>
@@ -840,9 +992,12 @@ defineExpose({ close });
             </template>
 
             <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-2 px-3 pb-3 sm:pb-4" :class="chromeClass">
+                <div v-if="currentIsVideo" class="ilg-island w-full max-w-2xl rounded-full p-1">
+                    <VideoControls :video="video" :text="text" />
+                </div>
                 <p v-if="current?.caption" class="ilg-island max-w-3xl rounded-full px-3 py-1 text-center text-sm text-white/80">{{ current.caption }}</p>
                 <div v-if="showThumbnails" class="ilg-island w-fit max-w-full overflow-hidden rounded-[14px] p-1">
-                    <Thumbnails :images="images" :index="slider.target.value" :label="(position) => format(text.image, { number: position + 1 })" tone="overlay" @select="selectThumbnail" />
+                    <Thumbnails :images="images" :index="slider.target.value" :label="(position) => itemLabel(text, images[position], position)" tone="overlay" @select="selectThumbnail" />
                 </div>
             </div>
         </div>

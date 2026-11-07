@@ -7,7 +7,7 @@
 <h1 align="center">Laravel Islands Gallery</h1>
 
 <p align="center">
-An image gallery for <a href="https://github.com/jonaaix/laravel-islands">Laravel Islands</a>: an inline carousel with thumbnails and a full-screen lightbox with zoom, pan, pinch, swipe, keyboard control, slideshow and fullscreen — in light and dark.
+An image and video gallery for <a href="https://github.com/jonaaix/laravel-islands">Laravel Islands</a>: an inline carousel with thumbnails and a full-screen lightbox with zoom, pan, pinch, swipe, keyboard control, slideshow, fullscreen and video playback — in light and dark.
 </p>
 
 <p align="center">
@@ -37,6 +37,7 @@ anything you like.
 - **Inline carousel** — a 3∶2 stage with arrows, swipe, counter and a thumbnail strip
 - **Lightbox** — zoom at the pointer, pan, pinch, swipe, slideshow and fullscreen
 - **Opens out of the picture** — the image grows from the thumbnail that was clicked and closes back into it
+- **Videos beside images** — a poster with a play badge, playback controls in the same glass look
 - **Keyboard and touch** — arrows, Esc and Space; swipe to step, drag down to close
 - **Your wording** — every label is a prop, English fallbacks only
 
@@ -90,6 +91,8 @@ Every image is a plain object; only `src` is required.
 | `alt` | Alternative text; falls back to the caption |
 | `filename` | Name of the saved file; falls back to the last part of the URL |
 | `downloads` | Sizes to choose from, see [Download](#download) |
+| `type` | `'video'` for a video; unset, a `.mp4`, `.m4v`, `.mov`, `.webm` or `.ogv` file counts as one |
+| `poster` | Still image of a video, shown before it plays; see [Videos](#videos) |
 
 Map whatever your server sends into this shape in a `computed` — the components read no other keys.
 
@@ -110,6 +113,7 @@ Map whatever your server sends into this shape in a `computed` — the component
 | `lightbox` | `true` | A click or tap on the stage opens the full-screen view |
 | `captions` | `true` | The current image's caption, bottom centre on the stage |
 | `downloadable` | `true` | Download button in the lightbox |
+| `autoplay` | `true` | A video starts playing when the lightbox shows it |
 | `labels` | English | See [Wording](#wording) |
 
 Emits `change(index)` whenever another image comes to the front. The arrows appear on hover and
@@ -142,6 +146,7 @@ emits `close`.
 | `slideshowInterval` | `4000` | Milliseconds per image in the slideshow |
 | `maxZoom` | `4` | Largest zoom factor |
 | `downloadable` | `true` | Download button in the toolbar |
+| `autoplay` | `true` | A video starts playing when it comes to the front |
 | `labels` | English | See [Wording](#wording) |
 
 | Input | Effect |
@@ -176,6 +181,38 @@ openLightbox(images, {
 
 `start` is the image shown first; every other option is a `Lightbox` prop. The lightbox mounts on
 first use and is reused after that.
+
+## Videos
+
+A video sits in the same list as the images:
+
+```js
+{ type: 'video', src: 'https://…/demo.mp4', poster: 'https://…/demo.jpg', thumb: 'https://…/demo-336.jpg', caption: 'Running at full speed' }
+```
+
+The gallery stage and the thumbnail strip show the poster with a play badge; without a `poster` they
+show the video's first frame. A click on the stage opens the lightbox, where the video starts
+playing. With `:lightbox="false"` the video plays in place on the stage instead.
+
+In the lightbox the video takes the image's place and keeps its gestures: swipe to step, drag down to
+close. Zoom is off. A control bar below the video carries play and pause, the time, a seek bar that
+shows what has loaded, mute and — on devices with a pointer — the volume.
+
+| Input | Effect |
+| --- | --- |
+| Click on the video, <kbd>Space</kbd>, <kbd>K</kbd> | Play / pause |
+| <kbd>M</kbd> | Mute / unmute |
+| <kbd>←</kbd> <kbd>→</kbd> | Previous / next item, as with images |
+| <kbd>←</kbd> <kbd>→</kbd> on the focused seek bar | Back / forward 5 seconds |
+
+- The controls fade out after a few seconds of playback and return when the pointer moves or the
+  screen is tapped.
+- Leaving a video pauses it; coming back resumes where it stopped.
+- The slideshow plays a video to its end before it moves on.
+- Download saves the video file, like an image.
+
+Prefer MP4 (H.264) or WebM: every browser plays them. A video on another domain plays without CORS
+headers, but needs them to be saved in place by the download button.
 
 ## Download
 
@@ -219,6 +256,13 @@ const labels = computed(() => ({
     fullscreen: t('Full screen'),
     exitFullscreen: t('Exit full screen'),
     download: t('Download'),
+    video: t('Video :number'),
+    playVideo: t('Play'),
+    pauseVideo: t('Pause'),
+    seek: t('Seek'),
+    mute: t('Mute'),
+    unmute: t('Unmute'),
+    volume: t('Volume'),
 }));
 ```
 
@@ -247,4 +291,4 @@ npm test
 
 [MIT](LICENSE.md)
 
-Sample photos in the screenshots: [Unsplash](https://unsplash.com/license).
+Sample photos in the screenshots: [Unsplash](https://unsplash.com/license). Sample video in the demo: [MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video), CC0.

@@ -1,13 +1,17 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { SLIDE_DURATION, SLIDE_EASING, useSlider } from '../composables/useSlider.js';
-import { DEFAULT_LABELS, format } from '../labels.js';
+import { useVideo } from '../composables/useVideo.js';
+import { DEFAULT_LABELS, format, itemLabel } from '../labels.js';
+import { firstFrame, isVideo, stillOf } from '../media.js';
 import IconChevronLeft from '../icons/IconChevronLeft.vue';
 import IconChevronRight from '../icons/IconChevronRight.vue';
 import IconFullscreen from '../icons/IconFullscreen.vue';
+import IconPlay from '../icons/IconPlay.vue';
 import { IconButton } from '@aaix/laravel-islands/vue/helpers';
 import Lightbox from './Lightbox.vue';
 import Thumbnails from './Thumbnails.vue';
+import VideoControls from './VideoControls.vue';
 
 const props = defineProps({
     images: { type: Array, required: true },
@@ -19,6 +23,7 @@ const props = defineProps({
     lightbox: { type: Boolean, default: true },
     captions: { type: Boolean, default: true },
     downloadable: { type: Boolean, default: true },
+    autoplay: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
 });
 
@@ -44,6 +49,9 @@ const slides = computed(() => [
 ]);
 
 const caption = computed(() => (props.captions ? props.images[slider.target.value]?.caption ?? '' : ''));
+const currentIsVideo = computed(() => isVideo(props.images[slider.index.value]));
+const playsInline = computed(() => currentIsVideo.value && !props.lightbox);
+const video = useVideo();
 
 const trackStyle = computed(() => ({
     transform: `translate3d(${slider.offset.value}px, 0, 0)`,
@@ -51,6 +59,7 @@ const trackStyle = computed(() => ({
 }));
 
 watch(slider.index, (index) => emit('change', index));
+watch(slider.target, () => video.pause());
 watch(() => props.images, () => slider.reset(0));
 
 let resizeObserver = null;
@@ -112,6 +121,8 @@ function onPointerUp(event) {
 
     if (drag.axis === 'x') {
         slider.release(drag.base + event.clientX - drag.x, drag.velocity);
+    } else if (!drag.axis && playsInline.value) {
+        video.toggle();
     } else if (!drag.axis && props.lightbox) {
         lightboxIndex.value = slider.index.value;
     }
@@ -137,7 +148,7 @@ function onLightboxChange(index) {
         <div
             ref="stage"
             class="group relative overflow-hidden rounded-il-card bg-il-neutral-100 ring-1 ring-il-neutral-200 dark:bg-white/5 dark:ring-white/10"
-            :class="lightbox ? 'cursor-zoom-in' : ''"
+            :class="currentIsVideo ? 'cursor-pointer' : lightbox ? 'cursor-zoom-in' : ''"
             :style="{ aspectRatio: aspect }"
             style="touch-action: pan-y"
             @pointerdown="onPointerDown"
@@ -152,16 +163,49 @@ function onLightboxChange(index) {
                     class="absolute inset-0"
                     :style="{ transform: `translate3d(${slide.position * 100}%, 0, 0)` }"
                 >
-                    <img
-                        v-if="slide.image"
+                    <video
+                        v-if="slide.image && slide.position === 0 && playsInline"
+                        :ref="video.bind"
                         :key="slide.image.src"
                         :src="slide.image.src"
+                        :poster="slide.image.poster"
+                        :aria-label="slide.image.alt ?? slide.image.caption ?? undefined"
+                        preload="metadata"
+                        playsinline
+                        class="size-full bg-black"
+                        :class="fit === 'contain' ? 'object-contain' : 'object-cover'"
+                        v-on="video.listeners"
+                    />
+                    <img
+                        v-else-if="slide.image && stillOf(slide.image)"
+                        :key="slide.image.src"
+                        :src="stillOf(slide.image)"
                         :alt="slide.position === 0 ? (slide.image.alt ?? slide.image.caption ?? '') : ''"
                         draggable="false"
                         class="size-full select-none"
                         :class="fit === 'contain' ? 'object-contain' : 'object-cover'"
                     />
+                    <video
+                        v-else-if="slide.image"
+                        :key="slide.image.src"
+                        :src="firstFrame(slide.image.src)"
+                        :aria-label="slide.position === 0 ? (slide.image.alt ?? slide.image.caption ?? undefined) : undefined"
+                        preload="metadata"
+                        muted
+                        playsinline
+                        class="pointer-events-none size-full bg-black"
+                        :class="fit === 'contain' ? 'object-contain' : 'object-cover'"
+                    />
                 </div>
+            </div>
+
+            <div
+                v-if="currentIsVideo && !slider.animating.value && !(playsInline && video.playing)"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+                <span class="ilg-play-badge flex size-12 items-center justify-center rounded-full">
+                    <IconPlay class="size-5 translate-x-px" />
+                </span>
             </div>
 
             <template v-if="images.length > 1">
@@ -177,15 +221,23 @@ function onLightboxChange(index) {
                 </div>
             </template>
 
+            <div
+                v-if="playsInline"
+                class="ilg-inline-controls absolute inset-x-2 bottom-2 rounded-full bg-black/55 p-0.5 text-white backdrop-blur-sm"
+                :data-playing="video.playing ? '' : undefined"
+            >
+                <VideoControls :video="video" :text="text" size="md" />
+            </div>
+
             <span
-                v-if="caption"
+                v-if="caption && !playsInline"
                 class="pointer-events-none absolute bottom-2 left-1/2 max-w-[calc(100%-10rem)] -translate-x-1/2 truncate rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm"
             >
                 {{ caption }}
             </span>
 
             <span
-                v-if="images.length > 1"
+                v-if="images.length > 1 && !playsInline"
                 class="pointer-events-none absolute bottom-2 right-2 rounded-full bg-black/55 px-2 py-0.5 text-xs font-medium tabular-nums text-white backdrop-blur-sm"
             >
                 {{ format(text.counter, { current: slider.target.value + 1, total: images.length }) }}
@@ -202,7 +254,7 @@ function onLightboxChange(index) {
             v-if="thumbnails && images.length > 1"
             :images="images"
             :index="slider.target.value"
-            :label="(position) => format(text.image, { number: position + 1 })"
+            :label="(position) => itemLabel(text, images[position], position)"
             @select="slider.goTo"
         />
 
@@ -213,6 +265,7 @@ function onLightboxChange(index) {
             :origin="originOf"
             :loop="loop"
             :downloadable="downloadable"
+            :autoplay="autoplay"
             :labels="labels"
             @update:index="onLightboxChange"
             @close="lightboxIndex = null"
@@ -243,12 +296,33 @@ function onLightboxChange(index) {
     background-color: rgb(0 0 0 / 0.45);
 }
 
+.ilg-play-badge {
+    background-color: rgb(0 0 0 / 0.4);
+    color: white;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+    backdrop-filter: blur(6px);
+}
+
+.ilg-inline-controls {
+    transition: opacity 500ms ease-out;
+}
+
+.ilg-inline-controls[data-playing] {
+    opacity: 0;
+}
+
+.group:hover .ilg-inline-controls,
+.ilg-inline-controls:focus-within {
+    opacity: 1;
+}
+
 @media (hover: none) {
     .ilg-inline-arrow {
         display: none;
     }
 
-    .ilg-inline-open {
+    .ilg-inline-open,
+    .ilg-inline-controls[data-playing] {
         opacity: 1;
     }
 }

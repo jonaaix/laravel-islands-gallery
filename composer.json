@@ -1,6 +1,6 @@
 {
     "name": "aaix/laravel-islands-gallery",
-    "description": "An image gallery for Laravel Islands: an inline carousel with thumbnails and a lightbox with zoom, pan, swipe and keyboard control.",
+    "description": "An image and video gallery for Laravel Islands: an inline carousel with thumbnails and a lightbox with zoom, pan, swipe, keyboard control and video playback.",
     "type": "library",
     "license": "MIT",
     "authors": [

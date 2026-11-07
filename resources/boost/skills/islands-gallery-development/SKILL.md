@@ -1,6 +1,6 @@
 ---
 name: islands-gallery-development
-description: Show images with aaix/laravel-islands-gallery — the inline Gallery (3:2 stage, arrows, swipe, thumbnails) and the full-screen Lightbox (zoom, pan, pinch, swipe, keyboard, slideshow, fullscreen). Use whenever an island shows more than a single picture or a picture should open large.
+description: Show images and videos with aaix/laravel-islands-gallery — the inline Gallery (3:2 stage, arrows, swipe, thumbnails) and the full-screen Lightbox (zoom, pan, pinch, swipe, keyboard, slideshow, fullscreen, video playback). Use whenever an island shows more than a single picture, a picture should open large, or a video should play.
 ---
 
 # Showing Images
@@ -21,6 +21,10 @@ Every image is a plain object; only `src` is required.
 
 Map whatever the server sends into this shape in a `computed` — the components never read
 other keys.
+
+A video goes in the same list: `{ type: 'video', src, poster, thumb, caption }`. Without `type`, a
+`.mp4`, `.m4v`, `.mov`, `.webm` or `.ogv` file counts as a video. Always send a `poster` when the
+server has one; without it the stage and thumbnails fall back to the video's first frame.
 
 ## Gallery — inline
 
@@ -68,6 +72,16 @@ carries counter, zoom, slideshow, fullscreen, download and close.
 Further props: `loop`, `thumbnails`, `slideshowInterval` (ms, default 4000), `maxZoom` (default 4),
 `downloadable` (default `true`, also on `Gallery`).
 
+## Videos
+
+The stage and thumbnails show the poster with a play badge; a click opens the lightbox and the video
+plays (`autoplay`, default `true`, on `Gallery` and `Lightbox`). With `:lightbox="false"` it plays in
+place on the stage. In the lightbox: no zoom, swipe and drag-down still work, a control bar carries
+play/pause, time, seek bar with loaded range, mute and volume. Space or K plays/pauses, M mutes,
+← → keep stepping through the list (they seek only on the focused seek bar). Controls fade out while
+playing, leaving pauses, coming back resumes, the slideshow waits for a video's end. Prefer MP4
+(H.264) or WebM.
+
 ## Download
 
 The button saves `src` under `filename` (falls back to the URL's last segment). Several sizes go
@@ -93,7 +107,8 @@ const labels = computed(() => ({
     dialog: t('Image viewer'), counter: t(':current / :total'), image: t('Image :number'), open: t('Open image'),
     previous: t('Previous image'), next: t('Next image'), close: t('Close'), zoomIn: t('Zoom in'), zoomOut: t('Zoom out'),
     play: t('Start slideshow'), pause: t('Pause slideshow'), fullscreen: t('Full screen'),
-    exitFullscreen: t('Exit full screen'), download: t('Download'),
+    exitFullscreen: t('Exit full screen'), download: t('Download'), video: t('Video :number'), playVideo: t('Play'),
+    pauseVideo: t('Pause'), seek: t('Seek'), mute: t('Mute'), unmute: t('Unmute'), volume: t('Volume'),
 }));
 ```
 

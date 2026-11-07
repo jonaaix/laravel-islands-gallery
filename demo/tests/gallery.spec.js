@@ -226,3 +226,74 @@ test.describe('download', () => {
         await expect(lightbox(page).getByRole('menu')).toBeHidden();
     });
 });
+
+test.describe('video', () => {
+    const media = (page) => page.locator('#media');
+    const inline = (page) => page.locator('#inline');
+
+    async function openVideo(page) {
+        await media(page).getByRole('button', { name: 'Video 2' }).click();
+        await expect(media(page).locator('span.tabular-nums')).toHaveText('2 / 3');
+        await media(page).locator('[style*="transition: none"]').first().waitFor();
+        await media(page).click({ position: { x: 120, y: 80 } });
+        await expect(lightbox(page)).toBeVisible();
+    }
+
+    test('names a video in the thumbnail strip', async ({ page }) => {
+        const thumbnails = media(page).locator('.ilg-thumbnails button');
+
+        await expect(thumbnails.nth(0)).toHaveAttribute('aria-label', 'Image 1');
+        await expect(thumbnails.nth(1)).toHaveAttribute('aria-label', 'Video 2');
+    });
+
+    test('opens a video playing in the lightbox, without zoom', async ({ page }) => {
+        await openVideo(page);
+
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', false);
+        await expect(lightbox(page).getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+        await expect(lightbox(page).getByRole('button', { name: 'Zoom in' })).toHaveCount(0);
+    });
+
+    test('pauses with Space and mutes with M', async ({ page }) => {
+        await openVideo(page);
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', false);
+
+        await page.keyboard.press('Space');
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', true);
+
+        await page.keyboard.press('m');
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('muted', true);
+        await expect(lightbox(page).getByRole('button', { name: 'Unmute' })).toBeVisible();
+    });
+
+    test('seeks where the seek bar is clicked', async ({ page }) => {
+        await openVideo(page);
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', false);
+        await page.keyboard.press('Space');
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', true);
+
+        const seek = lightbox(page).getByRole('slider', { name: 'Seek' });
+        const box = await seek.boundingBox();
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+        await expect.poll(async () => Number(await seek.getAttribute('aria-valuenow'))).toBeGreaterThan(40);
+        expect(Number(await seek.getAttribute('aria-valuenow'))).toBeLessThan(60);
+    });
+
+    test('keeps the arrow keys for stepping and stops the video on leaving it', async ({ page }) => {
+        await openVideo(page);
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', false);
+
+        await page.keyboard.press('ArrowRight');
+
+        await expect(lightbox(page)).toContainText('3 / 3');
+        await expect(lightbox(page).locator('video.ilg-video')).toHaveCount(0);
+    });
+
+    test('plays in place when the lightbox is off', async ({ page }) => {
+        await inline(page).click({ position: { x: 120, y: 80 } });
+
+        await expect(inline(page).getByLabel('Bee on a flower')).toHaveJSProperty('paused', false);
+        await expect(lightbox(page)).toHaveCount(0);
+    });
+});

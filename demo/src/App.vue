@@ -26,6 +26,11 @@ const images = photos.map(([id, caption, width, height]) => ({
     ],
 }));
 
+const video = { type: 'video', src: './videos/flower.webm', caption: 'Bee on a flower', filename: 'bee-on-a-flower.webm' };
+
+const media = [images[0], { ...video, poster: './videos/flower.jpg' }, images[3]];
+const inlineMedia = [video, images[6]];
+
 const thumbs = ref([]);
 
 function openFromList(index) {
@@ -63,9 +68,24 @@ function openFromList(index) {
             </div>
         </section>
 
+        <section class="space-y-2">
+            <h2 class="text-base font-semibold">Photos and videos</h2>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Plays in the lightbox</p>
+                    <Gallery id="media" :images="media" />
+                </div>
+                <div class="space-y-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Plays in place, lightbox off</p>
+                    <Gallery id="inline" :images="inlineMedia" :lightbox="false" />
+                </div>
+            </div>
+        </section>
+
         <p class="text-xs text-gray-500 dark:text-gray-400">
             Sample photos: <a class="underline" href="https://unsplash.com/license">Unsplash</a>, served by
-            <a class="underline" href="https://picsum.photos">Lorem Picsum</a>.
+            <a class="underline" href="https://picsum.photos">Lorem Picsum</a>. Sample video:
+            <a class="underline" href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video">MDN</a>, CC0.
         </p>
     </main>
 </template>

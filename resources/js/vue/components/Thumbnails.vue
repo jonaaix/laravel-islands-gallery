@@ -1,5 +1,7 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue';
+import { firstFrame, isVideo } from '../media.js';
+import IconPlay from '../icons/IconPlay.vue';
 
 const props = defineProps({
     images: { type: Array, required: true },
@@ -42,7 +44,21 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
             ]"
             @click="emit('select', position)"
         >
-            <img :src="image.thumb ?? image.src" alt="" loading="lazy" draggable="false" class="aspect-[3/2] h-12 w-auto object-cover sm:h-14" />
+            <video
+                v-if="isVideo(image) && !(image.thumb ?? image.poster)"
+                :src="firstFrame(image.src)"
+                preload="metadata"
+                muted
+                playsinline
+                aria-hidden="true"
+                class="pointer-events-none aspect-[3/2] h-12 w-auto bg-black object-cover sm:h-14"
+            />
+            <img v-else :src="image.thumb ?? image.poster ?? image.src" alt="" loading="lazy" draggable="false" class="aspect-[3/2] h-12 w-auto object-cover sm:h-14" />
+            <span v-if="isVideo(image)" class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <span class="flex size-6 items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/20 backdrop-blur-sm">
+                    <IconPlay class="size-3 translate-x-px" />
+                </span>
+            </span>
         </button>
     </div>
 </template>

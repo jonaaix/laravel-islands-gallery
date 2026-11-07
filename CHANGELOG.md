@@ -2,6 +2,22 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.4] - 2026-11-07
+
+### Added
+
+- Videos in the same list as images: `type: 'video'` (or a video file extension) and an optional
+  `poster`. The stage and the thumbnail strip show the poster, or the first frame, with a play badge.
+- Playback in the lightbox with its own control bar: play and pause, time, a seek bar showing what has
+  loaded, mute and volume. Space or K plays and pauses, M mutes; the arrow keys keep stepping through
+  the list. Zoom is off for videos, swipe and drag-down still work.
+- The controls fade out during playback and return on pointer movement or a tap. Leaving a video
+  pauses it, coming back resumes it, and the slideshow plays a video to its end before moving on.
+- `autoplay` on `Gallery` and `Lightbox` (default `true`); with the lightbox off, a video plays in
+  place on the gallery stage.
+- `isVideo(item)` export and the labels `video`, `playVideo`, `pauseVideo`, `seek`, `mute`, `unmute`
+  and `volume`.
+
 ## [1.0.3] - 2026-11-02
 
 ### Changed
