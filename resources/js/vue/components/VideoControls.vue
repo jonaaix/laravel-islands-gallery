@@ -18,10 +18,22 @@ const fractionOf = (seconds) => (props.video.duration ? seconds / props.video.du
 const silent = computed(() => props.video.muted || props.video.volume === 0);
 const elapsed = computed(() => `${clock(props.video.time)} / ${clock(props.video.duration)}`);
 const seekStep = computed(() => (props.video.duration ? 5 / props.video.duration : 0.05));
+
+function onKeydown(event) {
+    const direction = { ',': -1, '.': 1 }[event.key];
+
+    if (!direction || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    props.video.stepFrame(direction);
+}
 </script>
 
 <template>
-    <div class="ilg-video-controls flex items-center gap-1" @pointerdown.stop>
+    <div class="ilg-video-controls flex items-center gap-1" @pointerdown.stop @keydown="onKeydown">
         <IconButton :label="video.playing ? text.pauseVideo : text.playVideo" tone="plain" :size="size" class="ilg-tool shrink-0" @click="video.toggle()">
             <IconPause v-if="video.playing" />
             <IconPlay v-else />

@@ -1,10 +1,15 @@
 import { onScopeDispose, reactive } from 'vue';
 
+const FALLBACK_FRAME_LENGTH = 1 / 30;
+const FRAME_SAMPLES = 30;
+
 export function useVideo({ onEnded = null } = {}) {
     const positions = new Map();
     let element = null;
     let playOnLoad = null;
     let frame = null;
+    let frameLength = FALLBACK_FRAME_LENGTH;
+    let frameSampler = null;
 
     const sourceOf = (media) => media.getAttribute('src');
 
@@ -40,6 +45,17 @@ export function useVideo({ onEnded = null } = {}) {
 
         element.currentTime = Math.min(element.duration, Math.max(0, seconds));
         video.time = element.currentTime;
+    }
+
+    function stepFrame(direction) {
+        if (!element || !Number.isFinite(element.duration)) {
+            return;
+        }
+
+        pause();
+
+        const current = Math.floor(element.currentTime / frameLength + 0.001);
+        seek((current + direction + 0.5) * frameLength);
     }
 
     function setVolume(level) {
@@ -82,6 +98,40 @@ export function useVideo({ onEnded = null } = {}) {
         }
     }
 
+    function sampleFrameLength(media) {
+        if (!media.requestVideoFrameCallback || frameSampler?.media === media) {
+            return;
+        }
+
+        stopSampling();
+
+        let lastTime = null;
+        let samples = 0;
+
+        const onFrame = (now, { mediaTime }) => {
+            const gap = lastTime === null ? 0 : mediaTime - lastTime;
+
+            if (gap > 0.001) {
+                frameLength = samples === 0 ? gap : Math.min(frameLength, gap);
+                samples++;
+            }
+
+            lastTime = mediaTime;
+            frameSampler.handle = samples < FRAME_SAMPLES ? media.requestVideoFrameCallback(onFrame) : null;
+        };
+
+        frameSampler = { media, handle: media.requestVideoFrameCallback(onFrame) };
+    }
+
+    function stopSampling() {
+        if (frameSampler?.handle) {
+            frameSampler.media.cancelVideoFrameCallback(frameSampler.handle);
+        }
+
+        frameSampler = null;
+        frameLength = FALLBACK_FRAME_LENGTH;
+    }
+
     function bufferedEnd(media) {
         const ranges = media.buffered;
 
@@ -97,6 +147,7 @@ export function useVideo({ onEnded = null } = {}) {
     const listeners = {
         loadstart() {
             unfollow();
+            stopSampling();
             video.time = 0;
             video.duration = 0;
             video.buffered = 0;
@@ -144,6 +195,7 @@ export function useVideo({ onEnded = null } = {}) {
         playing(event) {
             video.waiting = false;
             follow(event.target);
+            sampleFrameLength(event.target);
         },
         seeked(event) {
             video.waiting = false;
@@ -172,11 +224,15 @@ export function useVideo({ onEnded = null } = {}) {
         toggle,
         queuePlay,
         seek,
+        stepFrame,
         setVolume,
         toggleMute,
     });
 
-    onScopeDispose(unfollow);
+    onScopeDispose(() => {
+        unfollow();
+        stopSampling();
+    });
 
     return video;
 }

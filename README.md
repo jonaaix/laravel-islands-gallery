@@ -206,6 +206,7 @@ shows what has loaded, mute and — on devices with a pointer — the volume.
 | --- | --- |
 | Click on the video, <kbd>Space</kbd>, <kbd>K</kbd> | Play / pause |
 | <kbd>M</kbd> | Mute / unmute |
+| <kbd>,</kbd> <kbd>.</kbd> | One frame back / forward, pausing first |
 | <kbd>←</kbd> <kbd>→</kbd> | Previous / next item, as with images |
 | <kbd>←</kbd> <kbd>→</kbd> on the focused seek bar | Back / forward 5 seconds |
 

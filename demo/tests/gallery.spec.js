@@ -279,6 +279,25 @@ test.describe('video', () => {
         expect(Number(await seek.getAttribute('aria-valuenow'))).toBeLessThan(60);
     });
 
+    test('steps frame by frame with comma and period, pausing first', async ({ page }) => {
+        await openVideo(page);
+        const element = lightbox(page).locator('video.ilg-video');
+        const time = () => element.evaluate((video) => video.currentTime);
+        await expect.poll(time).toBeGreaterThan(1);
+
+        await page.keyboard.press('.');
+        await expect(element).toHaveJSProperty('paused', true);
+        const first = await time();
+
+        await page.keyboard.press('.');
+        const second = await time();
+        expect(second - first).toBeGreaterThan(0.005);
+        expect(second - first).toBeLessThan(0.1);
+
+        await page.keyboard.press(',');
+        expect(await time()).toBeCloseTo(first, 3);
+    });
+
     test('keeps the arrow keys for stepping and stops the video on leaving it', async ({ page }) => {
         await openVideo(page);
         await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', false);

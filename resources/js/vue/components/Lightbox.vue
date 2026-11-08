@@ -766,7 +766,7 @@ function onKeydown(event) {
         '-': () => zoomTo(zoom.scale / 1.5),
         ' ': currentIsVideo.value ? video.toggle : toggleSlideshow,
         ...(currentIsVideo.value && !event.ctrlKey && !event.metaKey && !event.altKey
-            ? { k: video.toggle, K: video.toggle, m: video.toggleMute, M: video.toggleMute }
+            ? { k: video.toggle, K: video.toggle, m: video.toggleMute, M: video.toggleMute, ',': () => video.stepFrame(-1), '.': () => video.stepFrame(1) }
             : {}),
     };
 

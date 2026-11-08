@@ -78,6 +78,7 @@ The stage and thumbnails show the poster with a play badge; a click opens the li
 plays (`autoplay`, default `true`, on `Gallery` and `Lightbox`). With `:lightbox="false"` it plays in
 place on the stage. In the lightbox: no zoom, swipe and drag-down still work, a control bar carries
 play/pause, time, seek bar with loaded range, mute and volume. Space or K plays/pauses, M mutes,
+, and . step one frame back/forward (pausing first; also inline while a video control has focus),
 ← → keep stepping through the list (they seek only on the focused seek bar). Controls fade out while
 playing, leaving pauses, coming back resumes, the slideshow waits for a video's end. Prefer MP4
 (H.264) or WebM.

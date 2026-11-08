@@ -2,6 +2,14 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.8] - 2026-11-08
+
+### Added
+
+- Frame by frame: <kbd>,</kbd> and <kbd>.</kbd> step one frame back or forward and pause a playing
+  video first. The frame length is measured during playback, with 1/30 s as the fallback. Works in the
+  lightbox and, with the lightbox off, while a video control has focus.
+
 ## [1.0.7] - 2026-11-08
 
 ### Fixed
