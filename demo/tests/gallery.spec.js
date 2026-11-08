@@ -273,8 +273,7 @@ test.describe('video', () => {
         await expect(lightbox(page).locator('video.ilg-video')).toHaveJSProperty('paused', true);
 
         const seek = lightbox(page).getByRole('slider', { name: 'Seek' });
-        const box = await seek.boundingBox();
-        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await seek.click();
 
         await expect.poll(async () => Number(await seek.getAttribute('aria-valuenow'))).toBeGreaterThan(40);
         expect(Number(await seek.getAttribute('aria-valuenow'))).toBeLessThan(60);

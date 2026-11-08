@@ -1,9 +1,10 @@
-import { reactive } from 'vue';
+import { onScopeDispose, reactive } from 'vue';
 
 export function useVideo({ onEnded = null } = {}) {
     const positions = new Map();
     let element = null;
     let playOnLoad = null;
+    let frame = null;
 
     const sourceOf = (media) => media.getAttribute('src');
 
@@ -63,6 +64,24 @@ export function useVideo({ onEnded = null } = {}) {
         }
     }
 
+    function follow(media) {
+        unfollow();
+
+        const tick = () => {
+            video.time = media.currentTime;
+            frame = requestAnimationFrame(tick);
+        };
+
+        frame = requestAnimationFrame(tick);
+    }
+
+    function unfollow() {
+        if (frame !== null) {
+            cancelAnimationFrame(frame);
+            frame = null;
+        }
+    }
+
     function bufferedEnd(media) {
         const ranges = media.buffered;
 
@@ -77,6 +96,7 @@ export function useVideo({ onEnded = null } = {}) {
 
     const listeners = {
         loadstart() {
+            unfollow();
             video.time = 0;
             video.duration = 0;
             video.buffered = 0;
@@ -114,19 +134,23 @@ export function useVideo({ onEnded = null } = {}) {
             video.playing = true;
         },
         pause() {
+            unfollow();
             video.playing = false;
         },
         waiting() {
+            unfollow();
             video.waiting = true;
         },
-        playing() {
+        playing(event) {
             video.waiting = false;
+            follow(event.target);
         },
         seeked(event) {
             video.waiting = false;
             video.buffered = bufferedEnd(event.target);
         },
         ended(event) {
+            unfollow();
             video.playing = false;
             positions.delete(sourceOf(event.target));
             onEnded?.();
@@ -151,6 +175,8 @@ export function useVideo({ onEnded = null } = {}) {
         setVolume,
         toggleMute,
     });
+
+    onScopeDispose(unfollow);
 
     return video;
 }

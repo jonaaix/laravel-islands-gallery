@@ -2,6 +2,12 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.6] - 2026-11-08
+
+### Fixed
+
+- The seek bar moves smoothly during playback instead of jumping a few times per second.
+
 ## [1.0.5] - 2026-11-08
 
 ### Changed
