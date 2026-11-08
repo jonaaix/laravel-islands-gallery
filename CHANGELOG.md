@@ -2,6 +2,12 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.5] - 2026-11-08
+
+### Changed
+
+- README: a screenshot of a video playing in the lightbox, with its control bar.
+
 ## [1.0.4] - 2026-11-07
 
 ### Added

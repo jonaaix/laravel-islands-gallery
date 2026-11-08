@@ -184,6 +184,10 @@ first use and is reused after that.
 
 ## Videos
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jonaaix/laravel-islands-gallery/main/assets/video.webp" alt="A paused video in the lightbox with its control bar above the caption" width="720">
+</p>
+
 A video sits in the same list as the images:
 
 ```js
