@@ -28,7 +28,7 @@ const seekStep = computed(() => (props.video.duration ? 5 / props.video.duration
         </IconButton>
         <span class="shrink-0 px-1 text-xs font-medium tabular-nums text-white/85">{{ elapsed }}</span>
         <ControlSlider
-            class="min-w-0 flex-1 px-1"
+            class="min-w-0 flex-1"
             :value="fractionOf(video.time)"
             :buffered="fractionOf(video.buffered)"
             :step="seekStep"
@@ -41,7 +41,7 @@ const seekStep = computed(() => (props.video.duration ? 5 / props.video.duration
             <IconSpeakerWave v-else />
         </IconButton>
         <ControlSlider
-            class="ilg-volume hidden w-20 shrink-0 px-1 sm:flex"
+            class="ilg-volume mr-2 hidden w-20 shrink-0 sm:flex"
             :value="silent ? 0 : video.volume"
             :step="0.1"
             :label="text.volume"

@@ -12,12 +12,13 @@ const props = defineProps({
 const emit = defineEmits(['input']);
 
 const bar = ref(null);
+const track = ref(null);
 const dragging = ref(false);
 
 const percent = (fraction) => `${Math.min(1, Math.max(0, fraction)) * 100}%`;
 
 function fractionAt(event) {
-    const box = bar.value.getBoundingClientRect();
+    const box = track.value.getBoundingClientRect();
 
     return Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
 }
@@ -66,7 +67,7 @@ function onKeydown(event) {
         aria-valuemax="100"
         :aria-valuenow="Math.round(value * 100)"
         :aria-valuetext="valueText || undefined"
-        class="ilg-slider group/slider relative flex h-8 cursor-pointer touch-none items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        class="ilg-slider group/slider flex h-8 cursor-pointer touch-none items-center rounded-md px-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/60"
         :data-dragging="dragging ? '' : undefined"
         @pointerdown="onPointerDown"
         @pointermove="onPointerMove"
@@ -74,13 +75,15 @@ function onKeydown(event) {
         @pointercancel="onPointerUp"
         @keydown="onKeydown"
     >
-        <div class="relative h-1 w-full overflow-hidden rounded-full bg-white/20 transition-[height] duration-150 group-hover/slider:h-1.5 group-data-dragging/slider:h-1.5">
-            <div class="absolute inset-y-0 left-0 bg-white/30" :style="{ width: percent(buffered) }" />
-            <div class="absolute inset-y-0 left-0 bg-white" :style="{ width: percent(value) }" />
+        <div ref="track" class="relative flex h-full flex-1 items-center">
+            <div class="relative h-1 w-full overflow-hidden rounded-full bg-white/20 transition-[height] duration-150 group-hover/slider:h-1.5 group-data-dragging/slider:h-1.5">
+                <div class="absolute inset-y-0 left-0 bg-white/30" :style="{ width: percent(buffered) }" />
+                <div class="absolute inset-y-0 left-0 bg-white" :style="{ width: percent(value) }" />
+            </div>
+            <div
+                class="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-white shadow transition-transform duration-150 group-hover/slider:scale-100 group-focus-visible/slider:scale-100 group-data-dragging/slider:scale-100"
+                :style="{ left: percent(value) }"
+            />
         </div>
-        <div
-            class="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full bg-white shadow transition-transform duration-150 group-hover/slider:scale-100 group-focus-visible/slider:scale-100 group-data-dragging/slider:scale-100"
-            :style="{ left: percent(value) }"
-        />
     </div>
 </template>

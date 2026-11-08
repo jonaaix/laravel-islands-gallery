@@ -2,6 +2,13 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.7] - 2026-11-08
+
+### Fixed
+
+- A slider's knob stays inside the control bar at either end; the volume slider no longer runs past
+  the bar's rounded edge.
+
 ## [1.0.6] - 2026-11-08
 
 ### Fixed
