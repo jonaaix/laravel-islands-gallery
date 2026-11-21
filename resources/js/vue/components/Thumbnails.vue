@@ -35,13 +35,12 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
             type="button"
             :aria-label="label(position)"
             :aria-current="position === index ? 'true' : undefined"
-            class="relative shrink-0 overflow-hidden rounded-md transition duration-200 ease-out focus-visible:outline-none"
-            :class="[
-                tone === 'overlay'
-                    ? position === index ? 'ring-2 ring-white' : 'ring-1 ring-white/10 hover:ring-white/50'
-                    : position === index ? 'ring-2 ring-il-primary-500 dark:ring-il-primary-400' : 'ring-1 ring-black/5 hover:ring-il-primary-300 dark:ring-white/10 dark:hover:ring-white/40',
-                'focus-visible:ring-2 focus-visible:ring-il-primary-400',
-            ]"
+            class="ilg-thumbnail relative shrink-0 overflow-hidden rounded-md transition duration-200 ease-out focus-visible:outline-none"
+            :class="
+                position === index
+                    ? 'ilg-thumbnail-active'
+                    : tone === 'overlay' ? 'ring-1 ring-white/10 hover:ring-white/50' : 'ring-1 ring-black/5 hover:ring-black/25 dark:ring-white/10 dark:hover:ring-white/40'
+            "
             @click="emit('select', position)"
         >
             <video
@@ -62,3 +61,10 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
         </button>
     </div>
 </template>
+
+<style>
+.ilg-thumbnail-active,
+.ilg-thumbnail:focus-visible {
+    box-shadow: 0 0 0 2px white, 0 0 0 3px rgb(0 0 0 / 0.55);
+}
+</style>
