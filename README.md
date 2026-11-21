@@ -259,6 +259,7 @@ const labels = computed(() => ({
     next: t('Next image'),
     close: t('Close'),
     zoomIn: t('Zoom in'),
+    zoomActualSize: t('Zoom in (1:1)'),
     zoomOut: t('Zoom out'),
     play: t('Start slideshow'),
     pause: t('Pause slideshow'),

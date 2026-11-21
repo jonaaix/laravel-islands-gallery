@@ -11,6 +11,10 @@ All notable changes to `aaix/laravel-islands-gallery` will be documented in this
   2.5 times. A click or double tap on the image keeps zooming 2.5 times.
 - The zoom limit rises to actual size where that lies above `maxZoom`, for the wheel and pinch too.
 
+### Added
+
+- `zoomActualSize` label, default `Zoom in (1:1)`, on the zoom button while it zooms to actual size.
+
 ## [1.0.11] - 2026-11-21
 
 ### Added

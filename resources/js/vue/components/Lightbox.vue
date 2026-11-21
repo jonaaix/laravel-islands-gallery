@@ -134,6 +134,7 @@ watch(downloadMenuOpen, (open) => {
 
 watch(() => slider.index.value, () => (downloadMenuOpen.value = false));
 const zoomed = computed(() => zoom.scale > 1.01);
+const zoomsToActualSize = ref(false);
 const dismissProgress = computed(() => Math.min(1, Math.abs(dismiss.y) / (CLOSE_DISTANCE * 2.5)));
 const slides = computed(() => [
     { position: -1, image: slider.prevIndex.value === null ? null : props.images[slider.prevIndex.value] },
@@ -394,6 +395,7 @@ function preload(index) {
 function onResize() {
     measure();
     resetZoom(false);
+    measureActualSize();
 }
 
 // ----- Zoom and pan -----
@@ -423,6 +425,10 @@ function actualSizeScale() {
     const image = currentMedia;
 
     return image?.naturalWidth && image.offsetWidth ? image.naturalWidth / image.offsetWidth : 0;
+}
+
+function measureActualSize() {
+    zoomsToActualSize.value = actualSizeScale() > 1;
 }
 
 function zoomLimit() {
@@ -719,6 +725,7 @@ function onVideoEnded() {
 
 function bindMedia(element) {
     currentMedia = element;
+    measureActualSize();
     video.bind(element?.tagName === 'VIDEO' ? element : null);
 }
 
@@ -929,6 +936,7 @@ defineExpose({ close });
                             draggable="false"
                             class="ilg-image max-h-full max-w-full rounded-lg object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)] will-change-transform"
                             :style="currentStyle"
+                            @load="measureActualSize"
                         />
                         <img
                             v-else-if="slide.image && stillOf(slide.image)"
@@ -978,7 +986,7 @@ defineExpose({ close });
                 <span v-else aria-hidden="true" />
 
                 <div class="ilg-island flex items-center gap-0.5 rounded-full p-1">
-                    <IconButton v-if="!currentIsVideo" :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleActualSize()">
+                    <IconButton v-if="!currentIsVideo" :label="zoomed ? text.zoomOut : zoomsToActualSize ? text.zoomActualSize : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleActualSize()">
                         <IconZoomOut v-if="zoomed" />
                         <IconZoomIn v-else />
                     </IconButton>

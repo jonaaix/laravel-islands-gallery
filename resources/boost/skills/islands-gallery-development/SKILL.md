@@ -106,7 +106,7 @@ through the translation layer:
 ```js
 const labels = computed(() => ({
     dialog: t('Image viewer'), counter: t(':current / :total'), image: t('Image :number'), open: t('Open image'),
-    previous: t('Previous image'), next: t('Next image'), close: t('Close'), zoomIn: t('Zoom in'), zoomOut: t('Zoom out'),
+    previous: t('Previous image'), next: t('Next image'), close: t('Close'), zoomIn: t('Zoom in'), zoomActualSize: t('Zoom in (1:1)'), zoomOut: t('Zoom out'),
     play: t('Start slideshow'), pause: t('Pause slideshow'), fullscreen: t('Full screen'),
     exitFullscreen: t('Exit full screen'), download: t('Download'), video: t('Video :number'), playVideo: t('Play'),
     pauseVideo: t('Pause'), seek: t('Seek'), mute: t('Mute'), unmute: t('Unmute'), volume: t('Volume'),

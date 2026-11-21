@@ -10,6 +10,7 @@ export const DEFAULT_LABELS = {
     next: 'Next image',
     close: 'Close',
     zoomIn: 'Zoom in',
+    zoomActualSize: 'Zoom in (1:1)',
     zoomOut: 'Zoom out',
     play: 'Start slideshow',
     pause: 'Pause slideshow',
