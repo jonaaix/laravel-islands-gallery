@@ -2,6 +2,15 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.12] - 2026-11-21
+
+### Changed
+
+- The zoom button in the lightbox toolbar zooms a fitted image to its actual size (one image pixel
+  per CSS pixel) and fits any zoomed image again. An image already shown at actual size still zooms
+  2.5 times. A click or double tap on the image keeps zooming 2.5 times.
+- The zoom limit rises to actual size where that lies above `maxZoom`, for the wheel and pinch too.
+
 ## [1.0.11] - 2026-11-21
 
 ### Added

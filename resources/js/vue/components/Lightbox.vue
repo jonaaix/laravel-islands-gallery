@@ -419,6 +419,16 @@ function bounds(scale) {
     };
 }
 
+function actualSizeScale() {
+    const image = currentMedia;
+
+    return image?.naturalWidth && image.offsetWidth ? image.naturalWidth / image.offsetWidth : 0;
+}
+
+function zoomLimit() {
+    return Math.max(props.maxZoom, actualSizeScale());
+}
+
 function clampPan(scale, x, y, give = 0) {
     const limit = bounds(scale);
     const soften = (value, max) => {
@@ -440,7 +450,7 @@ function zoomTo(scale, clientX, clientY, animate = true) {
     }
 
     const box = stage.value.getBoundingClientRect();
-    const next = Math.min(props.maxZoom, Math.max(1, scale));
+    const next = Math.min(zoomLimit(), Math.max(1, scale));
     const px = (clientX ?? box.left + box.width / 2) - (box.left + box.width / 2);
     const py = (clientY ?? box.top + box.height / 2) - (box.top + box.height / 2);
     const ratio = next / zoom.scale;
@@ -455,6 +465,19 @@ function zoomTo(scale, clientX, clientY, animate = true) {
 function toggleZoom(clientX, clientY) {
     stopSlideshow();
     zoomed.value ? resetZoom() : zoomTo(2.5, clientX, clientY);
+}
+
+function toggleActualSize() {
+    stopSlideshow();
+
+    if (zoomed.value) {
+        resetZoom();
+
+        return;
+    }
+
+    const actual = actualSizeScale();
+    zoomTo(actual > 1 ? actual : 2.5);
 }
 
 function onWheel(event) {
@@ -524,7 +547,7 @@ function onPointerMove(event) {
     if (gesture.type === 'pinch' && pointers.size === 2) {
         const [a, b] = [...pointers.values()];
         const mid = midpoint(a, b);
-        const scale = Math.min(props.maxZoom * 1.15, Math.max(0.85, (gesture.scale * distance(a, b)) / gesture.distance));
+        const scale = Math.min(zoomLimit() * 1.15, Math.max(0.85, (gesture.scale * distance(a, b)) / gesture.distance));
         const box = stage.value.getBoundingClientRect();
         const px = gesture.mid.x - (box.left + box.width / 2);
         const py = gesture.mid.y - (box.top + box.height / 2);
@@ -955,7 +978,7 @@ defineExpose({ close });
                 <span v-else aria-hidden="true" />
 
                 <div class="ilg-island flex items-center gap-0.5 rounded-full p-1">
-                    <IconButton v-if="!currentIsVideo" :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleZoom()">
+                    <IconButton v-if="!currentIsVideo" :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleActualSize()">
                         <IconZoomOut v-if="zoomed" />
                         <IconZoomIn v-else />
                     </IconButton>
