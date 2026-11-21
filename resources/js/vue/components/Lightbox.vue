@@ -35,6 +35,7 @@ const props = defineProps({
     labels: { type: Object, default: () => ({}) },
     teleport: { type: [String, Object, Boolean], default: 'body' },
     closable: { type: Boolean, default: true },
+    immersive: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:index', 'close']);
@@ -160,16 +161,21 @@ const currentStyle = computed(() => {
 });
 
 const showThumbnails = computed(() => props.thumbnails && props.images.length > 1);
+const hidesWhenIdle = () => props.immersive || video.playing;
 const chromeVisible = computed(() => isVisible.value && !chromeHidden.value && dismiss.y === 0);
 const showPlayButton = computed(() => currentIsVideo.value && !video.playing && isVisible.value && !closing.value && dismiss.y === 0 && !intro.transform);
 const chromeClass = computed(() => (chromeVisible.value ? 'opacity-100 transition-opacity duration-200' : 'opacity-0 transition-opacity duration-150 [&_*]:pointer-events-none!'));
 
 function slidePadding(item) {
-    if (item && isVideo(item)) {
-        return showThumbnails.value ? 'pb-46 sm:pb-50' : 'pb-30';
+    if (props.immersive) {
+        return 'p-3 sm:p-6';
     }
 
-    return showThumbnails.value ? 'pb-32 sm:pb-36' : 'pb-16';
+    if (item && isVideo(item)) {
+        return `px-3 pt-16 sm:px-20 sm:pt-20 ${showThumbnails.value ? 'pb-46 sm:pb-50' : 'pb-30'}`;
+    }
+
+    return `px-3 pt-16 sm:px-20 sm:pt-20 ${showThumbnails.value ? 'pb-32 sm:pb-36' : 'pb-16'}`;
 }
 
 function arrowClass(neighbour) {
@@ -272,6 +278,7 @@ function open(index) {
     resetZoom(false);
     dismiss.y = 0;
     chromeHidden.value = false;
+    props.immersive && wakeChrome();
     isOpen.value = true;
     window.addEventListener('keydown', onKeydown, true);
     window.addEventListener('resize', onResize);
@@ -649,7 +656,7 @@ function wakeChrome() {
     clearTimeout(idleTimer);
     chromeHidden.value = false;
 
-    if (video.playing) {
+    if (hidesWhenIdle()) {
         idleTimer = setTimeout(hideIdleChrome, IDLE_MS);
     }
 }
@@ -657,13 +664,13 @@ function wakeChrome() {
 function hideIdleChrome() {
     const inUse = root.value?.querySelector('.ilg-island:hover, .ilg-island :focus-visible');
 
-    if (video.playing && currentIsVideo.value && !inUse) {
+    if ((props.immersive || (video.playing && currentIsVideo.value)) && !inUse) {
         chromeHidden.value = true;
     }
 }
 
 function onRootPointerMove(event) {
-    if (event.pointerType === 'mouse' && video.playing) {
+    if (event.pointerType === 'mouse' && hidesWhenIdle()) {
         wakeChrome();
     }
 }
@@ -674,6 +681,10 @@ watch(() => video.playing, (isPlaying) => {
     } else {
         clearTimeout(idleTimer);
         chromeHidden.value = false;
+
+        if (props.immersive) {
+            wakeChrome();
+        }
     }
 });
 
@@ -869,7 +880,7 @@ defineExpose({ close });
                     <div
                         v-for="slide in slides"
                         :key="slide.position"
-                        class="absolute inset-0 flex items-center justify-center px-3 pt-16 sm:px-20 sm:pt-20"
+                        class="absolute inset-0 flex items-center justify-center"
                         :class="slidePadding(slide.image)"
                         :style="{ transform: `translate3d(${slide.position * 100}%, 0, 0)` }"
                     >
@@ -919,7 +930,7 @@ defineExpose({ close });
 
                         <div
                             v-if="slide.position === 0 && currentIsVideo"
-                            class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 pt-16 sm:px-20 sm:pt-20"
+                            class="pointer-events-none absolute inset-0 flex items-center justify-center"
                             :class="slidePadding(slide.image)"
                         >
                             <IconButton v-if="showPlayButton" :label="text.playVideo" tone="plain" size="xl" class="ilg-arrow pointer-events-auto" @pointerdown.stop @click="video.play()">

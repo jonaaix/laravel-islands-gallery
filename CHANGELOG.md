@@ -9,6 +9,8 @@ All notable changes to `aaix/laravel-islands-gallery` will be documented in this
 - `closable` prop on `Lightbox`, default `true`. With `false` the lightbox has no close button, and
   neither Escape, a downward drag nor a click beside the image closes it; Escape still resets the
   zoom and closes the download menu.
+- `immersive` prop on `Lightbox`, default `false`. With `true` the media fills the screen up to a
+  narrow edge and the bars float above it, fading after a short idle time and returning on movement.
 
 ## [1.0.10] - 2026-11-21
 
