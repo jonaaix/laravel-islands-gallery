@@ -38,7 +38,7 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
             class="ilg-thumbnail relative shrink-0 overflow-hidden rounded-md transition duration-200 ease-out focus-visible:outline-none"
             :class="
                 position === index
-                    ? 'ilg-thumbnail-active'
+                    ? tone === 'overlay' ? 'ilg-thumbnail-active ring-2 ring-white/80' : 'ilg-thumbnail-active ring-2 ring-gray-900/60 dark:ring-white/80'
                     : tone === 'overlay' ? 'ring-1 ring-white/10 hover:ring-white/50' : 'ring-1 ring-black/5 hover:ring-black/25 dark:ring-white/10 dark:hover:ring-white/40'
             "
             @click="emit('select', position)"
@@ -63,7 +63,6 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
 </template>
 
 <style>
-.ilg-thumbnail-active,
 .ilg-thumbnail:focus-visible {
     box-shadow: 0 0 0 2px white, 0 0 0 3px rgb(0 0 0 / 0.55);
 }

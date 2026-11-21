@@ -2,6 +2,13 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.10] - 2026-11-21
+
+### Changed
+
+- The active thumbnail carries a quieter ring: 80 % white in the lightbox, 60 % gray
+  in the gallery (80 % white in dark mode). The keyboard focus ring keeps its stronger white outline.
+
 ## [1.0.9] - 2026-11-21
 
 ### Added
