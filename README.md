@@ -148,6 +148,7 @@ emits `close`.
 | `downloadable` | `true` | Download button in the toolbar |
 | `autoplay` | `true` | A video starts playing when it comes to the front |
 | `labels` | English | See [Wording](#wording) |
+| `teleport` | `'body'` | Where the lightbox renders: a selector or an element, `false` to stay in place |
 
 | Input | Effect |
 | --- | --- |
@@ -162,7 +163,10 @@ emits `close`.
 
 The toolbar carries the counter, zoom, slideshow, fullscreen, download and close. The lightbox
 sits on the modal layer (z-index 70) and is rendered into `body`, so it also opens from inside a
-modal.
+modal. While open it takes the keys it handles before the page sees them.
+
+Inside a shadow root, point `teleport` at an element of that root and add the package's CSS to it.
+Focus, fullscreen and the download menu work there as they do in the page.
 
 ### Open from anywhere
 

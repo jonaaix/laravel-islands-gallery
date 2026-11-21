@@ -2,6 +2,23 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.9] - 2026-11-21
+
+### Added
+
+- `teleport` prop on `Lightbox`: render into a given selector or element, or with `false` in place.
+  Defaults to `body` as before.
+- The lightbox works inside a shadow root: the focus trap, the fullscreen button and the download
+  menu read the shadow root instead of the document.
+
+### Changed
+
+- While the lightbox is open, the keys it handles no longer reach the page, so the page's own
+  shortcuts stay quiet.
+- The active thumbnail is marked white with a thin dark outer edge in the gallery and the lightbox,
+  in place of the primary colour, so it stands out on light and dark surfaces alike. The focus ring
+  matches it.
+
 ## [1.0.8] - 2026-11-08
 
 ### Added

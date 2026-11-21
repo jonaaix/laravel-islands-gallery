@@ -32,6 +32,7 @@ const props = defineProps({
     downloadable: { type: Boolean, default: true },
     autoplay: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
+    teleport: { type: [String, Object, Boolean], default: 'body' },
 });
 
 const emit = defineEmits(['update:index', 'close']);
@@ -111,7 +112,9 @@ function onDownloadClick() {
 }
 
 function closeDownloadMenuOutside(event) {
-    if (!downloadButton.value?.contains(event.target) && !downloadMenu.value?.contains(event.target)) {
+    const path = event.composedPath();
+
+    if (!path.includes(downloadButton.value) && !path.includes(downloadMenu.value)) {
         downloadMenuOpen.value = false;
     }
 }
@@ -266,7 +269,7 @@ function open(index) {
     dismiss.y = 0;
     chromeHidden.value = false;
     isOpen.value = true;
-    window.addEventListener('keydown', onKeydown);
+    window.addEventListener('keydown', onKeydown, true);
     window.addEventListener('resize', onResize);
     animateIn().then(() => root.value?.focus({ preventScroll: true }));
     arriveAt(slider.index.value);
@@ -321,10 +324,10 @@ function close() {
         intro.opacity = 1;
         dismiss.y = 0;
         unlockPageScroll();
-        window.removeEventListener('keydown', onKeydown);
+        window.removeEventListener('keydown', onKeydown, true);
         window.removeEventListener('resize', onResize);
 
-        if (document.fullscreenElement) {
+        if (fullscreen.value) {
             document.exitFullscreen?.();
         }
 
@@ -732,7 +735,7 @@ function toggleSlideshow() {
 }
 
 async function toggleFullscreen() {
-    if (document.fullscreenElement) {
+    if (fullscreen.value) {
         await document.exitFullscreen?.();
     } else {
         await root.value?.requestFullscreen?.();
@@ -740,13 +743,21 @@ async function toggleFullscreen() {
 }
 
 function onFullscreenChange() {
-    fullscreen.value = document.fullscreenElement === root.value;
+    fullscreen.value = !!root.value && rootNode().fullscreenElement === root.value;
     nextTick(measure);
 }
 
 document.addEventListener('fullscreenchange', onFullscreenChange);
 
 const canFullscreen = typeof document !== 'undefined' && document.fullscreenEnabled;
+
+function rootNode() {
+    return root.value?.getRootNode() ?? document;
+}
+
+function leftToSlider(event) {
+    return (event.key === 'ArrowLeft' || event.key === 'ArrowRight') && event.composedPath().some((element) => element.getAttribute?.('role') === 'slider');
+}
 
 function onKeydown(event) {
     const actions = {
@@ -771,6 +782,7 @@ function onKeydown(event) {
     };
 
     if (event.key === 'Tab') {
+        event.stopPropagation();
         trapFocus(event);
 
         return;
@@ -778,8 +790,9 @@ function onKeydown(event) {
 
     const action = actions[event.key];
 
-    if (action) {
+    if (action && !leftToSlider(event)) {
         event.preventDefault();
+        event.stopPropagation();
         action();
     }
 }
@@ -794,10 +807,12 @@ function trapFocus(event) {
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
 
-    if (event.shiftKey && document.activeElement === first) {
+    const active = rootNode().activeElement;
+
+    if (event.shiftKey && active === first) {
         event.preventDefault();
         last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
+    } else if (!event.shiftKey && active === last) {
         event.preventDefault();
         first.focus();
     }
@@ -808,7 +823,7 @@ onBeforeUnmount(() => {
     clearTimeout(idleTimer);
     window.removeEventListener('pointerdown', closeDownloadMenuOutside, true);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
-    window.removeEventListener('keydown', onKeydown);
+    window.removeEventListener('keydown', onKeydown, true);
     window.removeEventListener('resize', onResize);
 
     if (isOpen.value) {
@@ -820,7 +835,7 @@ defineExpose({ close });
 </script>
 
 <template>
-    <Teleport to="body">
+    <Teleport :to="teleport || 'body'" :disabled="teleport === false">
         <div
             v-if="isOpen"
             ref="root"
