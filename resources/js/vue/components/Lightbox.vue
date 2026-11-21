@@ -34,6 +34,7 @@ const props = defineProps({
     autoplay: { type: Boolean, default: true },
     labels: { type: Object, default: () => ({}) },
     teleport: { type: [String, Object, Boolean], default: 'body' },
+    closable: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(['update:index', 'close']);
@@ -546,7 +547,7 @@ function onPointerMove(event) {
             return;
         }
 
-        gesture.type = zoomed.value ? 'pan' : Math.abs(dx) > Math.abs(dy) ? 'swipe' : 'dismiss';
+        gesture.type = zoomed.value ? 'pan' : Math.abs(dx) > Math.abs(dy) || !props.closable ? 'swipe' : 'dismiss';
     }
 
     if (gesture.type === 'pan') {
@@ -616,7 +617,7 @@ function handleTap(event, tap) {
             video.toggle();
         } else if (tap.onImage) {
             toggleZoom(event.clientX, event.clientY);
-        } else if (!zoomed.value) {
+        } else if (!zoomed.value && props.closable) {
             close();
         }
 
@@ -771,7 +772,7 @@ function onKeydown(event) {
                 downloadMenuOpen.value = false;
             } else if (zoomed.value) {
                 resetZoom();
-            } else {
+            } else if (props.closable) {
                 close();
             }
         },
@@ -970,10 +971,12 @@ defineExpose({ close });
                             <IconDownload v-else />
                         </IconButton>
                     </span>
-                    <span class="mx-0.5 h-5 w-px bg-white/15" aria-hidden="true" />
-                    <IconButton :label="text.close" tone="plain" size="lg" class="ilg-tool" @click="close()">
-                        <IconXMark />
-                    </IconButton>
+                    <template v-if="closable">
+                        <span class="mx-0.5 h-5 w-px bg-white/15" aria-hidden="true" />
+                        <IconButton :label="text.close" tone="plain" size="lg" class="ilg-tool" @click="close()">
+                            <IconXMark />
+                        </IconButton>
+                    </template>
                 </div>
 
                 <div
