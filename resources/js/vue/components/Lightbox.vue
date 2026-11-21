@@ -17,6 +17,7 @@ import IconXMark from '../icons/IconXMark.vue';
 import IconZoomIn from '../icons/IconZoomIn.vue';
 import IconZoomOut from '../icons/IconZoomOut.vue';
 import { IconButton, lockPageScroll, unlockPageScroll } from '@aaix/laravel-islands/vue/helpers';
+import * as islandsHelpers from '@aaix/laravel-islands/vue/helpers';
 import Thumbnails from './Thumbnails.vue';
 import VideoControls from './VideoControls.vue';
 
@@ -45,6 +46,8 @@ const IDLE_MS = 2500;
 
 const text = computed(() => ({ ...DEFAULT_LABELS, ...props.labels }));
 const root = ref(null);
+// Islands releases before 1.0.176 have no teleport target; their tooltips stay in body.
+islandsHelpers.provideTeleportTarget?.(computed(() => (props.teleport === 'body' ? 'body' : root.value)));
 const stage = ref(null);
 const track = ref(null);
 let currentMedia = null;

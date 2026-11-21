@@ -8,6 +8,7 @@ All notable changes to `aaix/laravel-islands-gallery` will be documented in this
 
 - `teleport` prop on `Lightbox`: render into a given selector or element, or with `false` in place.
   Defaults to `body` as before.
+  With `@aaix/laravel-islands` 1.0.176 or later, the toolbar tooltips follow it.
 - The lightbox works inside a shadow root: the focus trap, the fullscreen button and the download
   menu read the shadow root instead of the document.
 
