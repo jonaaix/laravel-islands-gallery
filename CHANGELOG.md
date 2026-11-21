@@ -12,6 +12,10 @@ All notable changes to `aaix/laravel-islands-gallery` will be documented in this
 - `immersive` prop on `Lightbox`, default `false`. With `true` the media fills the screen up to a
   narrow edge and the bars float above it, fading after a short idle time and returning on movement.
 
+### Changed
+
+- The counter is hidden when the lightbox shows a single item.
+
 ## [1.0.10] - 2026-11-21
 
 ### Changed

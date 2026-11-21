@@ -949,9 +949,10 @@ defineExpose({ close });
             </div>
 
             <div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-3 p-3 sm:p-4" :class="chromeClass">
-                <span class="ilg-island rounded-full px-3 py-1.5 text-sm font-medium tabular-nums text-white/90">
+                <span v-if="images.length > 1" class="ilg-island rounded-full px-3 py-1.5 text-sm font-medium tabular-nums text-white/90">
                     {{ format(text.counter, { current: slider.target.value + 1, total: images.length }) }}
                 </span>
+                <span v-else aria-hidden="true" />
 
                 <div class="ilg-island flex items-center gap-0.5 rounded-full p-1">
                     <IconButton v-if="!currentIsVideo" :label="zoomed ? text.zoomOut : text.zoomIn" tone="plain" size="lg" class="ilg-tool" @click="toggleZoom()">
