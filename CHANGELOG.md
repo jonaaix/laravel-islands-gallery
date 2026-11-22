@@ -2,6 +2,20 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.13] - 2026-11-23
+
+### Added
+
+- `reserveThumbnails` prop on `Lightbox`, default `false`. With `true` the stage keeps the room of
+  the thumbnail strip free while there is only one image, so the image stays where it is when more
+  images arrive.
+
+### Changed
+
+- Replacing `images` while the lightbox is open jumps straight to `index` instead of sliding there.
+- The thumbnail strip renders only the thumbnails around its visible part, so a gallery of
+  thousands of images opens without delay.
+
 ## [1.0.12] - 2026-11-21
 
 ### Changed

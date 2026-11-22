@@ -143,6 +143,7 @@ emits `close`.
 | `originRadius` | `12` | Corner radius of that picture in px, so the shape matches on the way back |
 | `loop` | `true` | Wrap from the last image to the first |
 | `thumbnails` | `true` | Strip along the bottom |
+| `reserveThumbnails` | `false` | Keeps the strip's room free while there is only one image, so the image stays put when more arrive |
 | `slideshowInterval` | `4000` | Milliseconds per image in the slideshow |
 | `maxZoom` | `4` | Largest zoom factor |
 | `downloadable` | `true` | Download button in the toolbar |

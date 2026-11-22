@@ -27,6 +27,7 @@ const props = defineProps({
     origin: { type: Function, default: null },
     loop: { type: Boolean, default: true },
     thumbnails: { type: Boolean, default: true },
+    reserveThumbnails: { type: Boolean, default: false },
     slideshowInterval: { type: Number, default: 4000 },
     maxZoom: { type: Number, default: 4 },
     originRadius: { type: Number, default: 12 },
@@ -162,6 +163,7 @@ const currentStyle = computed(() => {
 });
 
 const showThumbnails = computed(() => props.thumbnails && props.images.length > 1);
+const thumbnailSpace = computed(() => showThumbnails.value || (props.thumbnails && props.reserveThumbnails));
 const hidesWhenIdle = () => props.immersive || video.playing;
 const chromeVisible = computed(() => isVisible.value && !chromeHidden.value && dismiss.y === 0);
 const showPlayButton = computed(() => currentIsVideo.value && !video.playing && isVisible.value && !closing.value && dismiss.y === 0 && !intro.transform);
@@ -173,10 +175,10 @@ function slidePadding(item) {
     }
 
     if (item && isVideo(item)) {
-        return `px-3 pt-16 sm:px-20 sm:pt-20 ${showThumbnails.value ? 'pb-46 sm:pb-50' : 'pb-30'}`;
+        return `px-3 pt-16 sm:px-20 sm:pt-20 ${thumbnailSpace.value ? 'pb-46 sm:pb-50' : 'pb-30'}`;
     }
 
-    return `px-3 pt-16 sm:px-20 sm:pt-20 ${showThumbnails.value ? 'pb-32 sm:pb-36' : 'pb-16'}`;
+    return `px-3 pt-16 sm:px-20 sm:pt-20 ${thumbnailSpace.value ? 'pb-32 sm:pb-36' : 'pb-16'}`;
 }
 
 function arrowClass(neighbour) {
@@ -350,12 +352,14 @@ function close() {
 }
 
 watch(
-    () => props.index,
-    (index) => {
+    [() => props.index, () => props.images],
+    ([index, images], [, previousImages]) => {
         if (index === null || index === undefined) {
             close();
         } else if (!isOpen.value) {
             open(index);
+        } else if (images !== previousImages) {
+            slider.reset(index);
         } else if (index !== slider.index.value) {
             slider.goTo(index);
         }

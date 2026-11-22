@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { firstFrame, isVideo } from '../media.js';
 import IconPlay from '../icons/IconPlay.vue';
 
@@ -13,8 +13,40 @@ const props = defineProps({
 const emit = defineEmits(['select']);
 const strip = ref(null);
 
+// Renders only the thumbnails around the shown part of the strip; spacers keep its full scroll width.
+const WINDOW = 40;
+const GAP_REM = 0.375;
+
+const centre = ref(props.index);
+const range = computed(() => {
+    if (props.images.length <= WINDOW * 2 + 1) {
+        return { start: 0, end: props.images.length };
+    }
+
+    const start = Math.min(Math.max(0, centre.value - WINDOW), props.images.length - WINDOW * 2 - 1);
+
+    return { start, end: start + WINDOW * 2 + 1 };
+});
+const shown = computed(() => props.images.slice(range.value.start, range.value.end).map((image, offset) => ({ image, position: range.value.start + offset })));
+
+function spacer(count) {
+    return { width: `calc(${count} * (var(--ilg-thumbnail-width) + ${GAP_REM}rem) - ${GAP_REM}rem)` };
+}
+
+function followScroll() {
+    const first = strip.value?.querySelector('[data-position]');
+
+    if (!first) {
+        return;
+    }
+
+    const step = first.offsetWidth + parseFloat(getComputedStyle(strip.value).columnGap || '0');
+    centre.value = Math.round((strip.value.scrollLeft + strip.value.clientWidth / 2) / step);
+}
+
 function reveal() {
-    const button = strip.value?.children[props.index];
+    centre.value = props.index;
+    const button = strip.value?.querySelector(`[data-position="${props.index}"]`);
 
     if (!button) {
         return;
@@ -28,10 +60,12 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
 </script>
 
 <template>
-    <div ref="strip" class="ilg-thumbnails flex gap-1.5 overflow-x-auto scroll-smooth p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div ref="strip" class="ilg-thumbnails flex gap-1.5 overflow-x-auto scroll-smooth p-1 [--ilg-thumbnail-width:4.5rem] [scrollbar-width:none] sm:[--ilg-thumbnail-width:5.25rem] [&::-webkit-scrollbar]:hidden" @scroll.passive="followScroll">
+        <span v-if="range.start > 0" aria-hidden="true" class="shrink-0" :style="spacer(range.start)"></span>
         <button
-            v-for="(image, position) in images"
+            v-for="{ image, position } in shown"
             :key="image.src + position"
+            :data-position="position"
             type="button"
             :aria-label="label(position)"
             :aria-current="position === index ? 'true' : undefined"
@@ -59,6 +93,7 @@ watch(() => props.index, () => nextTick(reveal), { immediate: true });
                 </span>
             </span>
         </button>
+        <span v-if="range.end < images.length" aria-hidden="true" class="shrink-0" :style="spacer(images.length - range.end)"></span>
     </div>
 </template>
 
