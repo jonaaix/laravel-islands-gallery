@@ -162,6 +162,107 @@ const currentStyle = computed(() => {
     };
 });
 
+// ----- Preview: the page's loaded picture stands in until the full version has decoded -----
+
+const MORPH_DURATION = 250;
+const ASPECT_TOLERANCE = 0.02;
+const decoded = reactive(new Set());
+const sizeStyle = ref(null);
+const previewing = computed(() => !!current.value?.preview && !isVideo(current.value) && !decoded.has(current.value.src));
+const mediaStyle = computed(() => {
+    const transition = [currentStyle.value.transition, sizeStyle.value?.transition].filter((part) => part && part !== 'none').join(', ');
+
+    return { ...currentStyle.value, ...sizeStyle.value, transition: transition || currentStyle.value.transition };
+});
+
+function shownSource(item) {
+    return item.preview && !decoded.has(item.src) ? item.preview : item.src;
+}
+
+function contentBox(image) {
+    const box = image.parentElement;
+    const style = getComputedStyle(box);
+
+    return {
+        width: box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+        height: box.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom),
+    };
+}
+
+function fittedSize(image, width, height, upscale) {
+    const box = contentBox(image);
+    const scale = Math.min(box.width / width, box.height / height);
+    const factor = upscale ? scale : Math.min(1, scale);
+
+    return { width: width * factor, height: height * factor };
+}
+
+function fitPreview() {
+    const image = currentMedia;
+
+    if (!previewing.value || !image?.naturalWidth) {
+        return;
+    }
+
+    const size = fittedSize(image, image.naturalWidth, image.naturalHeight, true);
+    sizeStyle.value = { width: `${size.width}px`, height: `${size.height}px` };
+}
+
+function swapIn(src, probe) {
+    if (intro.transform) {
+        setTimeout(() => swapIn(src, probe), SLIDE_DURATION);
+
+        return;
+    }
+
+    const image = currentMedia;
+
+    if (current.value?.src !== src || !image || !sizeStyle.value) {
+        decoded.add(src);
+        sizeStyle.value = null;
+
+        return;
+    }
+
+    const shown = { width: parseFloat(sizeStyle.value.width), height: parseFloat(sizeStyle.value.height) };
+    const target = fittedSize(image, probe.naturalWidth, probe.naturalHeight, false);
+    const sameShape = Math.abs(shown.width / shown.height - target.width / target.height) <= ASPECT_TOLERANCE * (target.width / target.height);
+    decoded.add(src);
+
+    if (sameShape && Math.abs(shown.width - target.width) < 1) {
+        sizeStyle.value = null;
+
+        return;
+    }
+
+    sizeStyle.value = {
+        width: `${target.width}px`,
+        height: `${target.height}px`,
+        transition: `width ${MORPH_DURATION}ms ${SLIDE_EASING}, height ${MORPH_DURATION}ms ${SLIDE_EASING}`,
+    };
+    setTimeout(() => {
+        if (current.value?.src === src) {
+            sizeStyle.value = null;
+        }
+    }, MORPH_DURATION);
+}
+
+watch(
+    () => [isOpen.value, current.value?.src, current.value?.preview],
+    ([open, src, preview]) => {
+        sizeStyle.value = null;
+
+        if (!open || !src || !preview || decoded.has(src)) {
+            return;
+        }
+
+        nextTick(fitPreview);
+        const probe = new Image();
+        probe.src = src;
+        probe.decode().then(() => swapIn(src, probe), () => {});
+    },
+);
+
 const showThumbnails = computed(() => props.thumbnails && props.images.length > 1);
 const thumbnailSpace = computed(() => showThumbnails.value || (props.thumbnails && props.reserveThumbnails));
 const hidesWhenIdle = () => props.immersive || video.playing;
@@ -242,6 +343,8 @@ function nextFrame(callback) {
 async function animateIn() {
     await nextTick();
     measure();
+    fitPreview();
+    await nextTick();
 
     const image = currentMedia;
     const isVideoElement = image?.tagName === 'VIDEO';
@@ -399,6 +502,7 @@ function preload(index) {
 function onResize() {
     measure();
     resetZoom(false);
+    fitPreview();
     measureActualSize();
 }
 
@@ -935,17 +1039,17 @@ defineExpose({ close });
                             v-else-if="slide.image && slide.position === 0"
                             :ref="bindMedia"
                             :key="slide.image.src"
-                            :src="slide.image.src"
+                            :src="shownSource(slide.image)"
                             :alt="slide.image.alt ?? slide.image.caption ?? ''"
                             draggable="false"
                             class="ilg-image max-h-full max-w-full rounded-lg object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)] will-change-transform"
-                            :style="currentStyle"
+                            :style="mediaStyle"
                             @load="measureActualSize"
                         />
                         <img
                             v-else-if="slide.image && stillOf(slide.image)"
                             :key="slide.image.src"
-                            :src="stillOf(slide.image)"
+                            :src="isVideo(slide.image) ? stillOf(slide.image) : shownSource(slide.image)"
                             alt=""
                             draggable="false"
                             class="max-h-full max-w-full rounded-lg object-contain shadow-[0_30px_80px_-20px_rgb(0_0_0/0.75)]"

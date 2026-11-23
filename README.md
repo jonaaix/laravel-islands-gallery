@@ -87,6 +87,7 @@ Every image is a plain object; only `src` is required.
 | --- | --- |
 | `src` | The full-size image, also what the download saves |
 | `thumb` | A small version for the thumbnail strip; falls back to `src` |
+| `preview` | An already loaded version the lightbox opens with at once; `src` replaces it once decoded |
 | `caption` | Shown on the stage and in the lightbox |
 | `alt` | Alternative text; falls back to the caption |
 | `filename` | Name of the saved file; falls back to the last part of the URL |

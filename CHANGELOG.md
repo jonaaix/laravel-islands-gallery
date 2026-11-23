@@ -2,6 +2,15 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.14] - 2026-11-23
+
+### Added
+
+- `preview` key on an image: an already loaded version the lightbox opens with at once, scaled to
+  the stage, while `src` loads behind it. Once `src` has decoded it takes over in place; when its
+  shape differs, the picture eases into the new shape. Without `preview` the lightbox still waits
+  up to 400 ms for `src` before opening.
+
 ## [1.0.13] - 2026-11-23
 
 ### Added
