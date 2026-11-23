@@ -2,6 +2,18 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.15] - 2026-11-23
+
+### Changed
+
+- A `preview` opens at its own size instead of being enlarged to the stage, so the picture only
+  grows into `src` and never shrinks after opening.
+
+### Fixed
+
+- The switch from `preview` to `src` skipped its transition when the images were replaced while
+  `src` was loading.
+
 ## [1.0.14] - 2026-11-23
 
 ### Added

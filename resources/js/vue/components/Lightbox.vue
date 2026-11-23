@@ -189,10 +189,10 @@ function contentBox(image) {
     };
 }
 
-function fittedSize(image, width, height, upscale) {
+function fittedSize(image, width, height) {
     const box = contentBox(image);
     const scale = Math.min(box.width / width, box.height / height);
-    const factor = upscale ? scale : Math.min(1, scale);
+    const factor = Math.min(1, scale);
 
     return { width: width * factor, height: height * factor };
 }
@@ -204,11 +204,15 @@ function fitPreview() {
         return;
     }
 
-    const size = fittedSize(image, image.naturalWidth, image.naturalHeight, true);
+    const size = fittedSize(image, image.naturalWidth, image.naturalHeight);
     sizeStyle.value = { width: `${size.width}px`, height: `${size.height}px` };
 }
 
 function swapIn(src, probe) {
+    if (decoded.has(src)) {
+        return;
+    }
+
     if (intro.transform) {
         setTimeout(() => swapIn(src, probe), SLIDE_DURATION);
 
@@ -225,7 +229,7 @@ function swapIn(src, probe) {
     }
 
     const shown = { width: parseFloat(sizeStyle.value.width), height: parseFloat(sizeStyle.value.height) };
-    const target = fittedSize(image, probe.naturalWidth, probe.naturalHeight, false);
+    const target = fittedSize(image, probe.naturalWidth, probe.naturalHeight);
     const sameShape = Math.abs(shown.width / shown.height - target.width / target.height) <= ASPECT_TOLERANCE * (target.width / target.height);
     decoded.add(src);
 
