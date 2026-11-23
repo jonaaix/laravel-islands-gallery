@@ -80,6 +80,14 @@ test.describe('lightbox', () => {
         await expect(lightbox(page)).toContainText('Snowfield');
     });
 
+    test('opens with the open button on the image the gallery is still moving to', async ({ page }) => {
+        await page.getByRole('button', { name: 'Image 3' }).first().click();
+        await gallery(page).getByRole('button', { name: 'Open image' }).click();
+
+        await expect(lightbox(page)).toContainText('3 / 8');
+        await expect(lightbox(page)).toContainText('Snowfield');
+    });
+
     test('steps with the keyboard', async ({ page }) => {
         await openLightbox(page);
         await page.keyboard.press('ArrowRight');

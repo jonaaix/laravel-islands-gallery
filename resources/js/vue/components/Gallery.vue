@@ -124,7 +124,7 @@ function onPointerUp(event) {
     } else if (!drag.axis && playsInline.value) {
         video.toggle();
     } else if (!drag.axis && props.lightbox) {
-        lightboxIndex.value = slider.index.value;
+        lightboxIndex.value = slider.target.value;
     }
 
     drag = null;
@@ -244,7 +244,7 @@ function onLightboxChange(index) {
             </span>
 
             <div v-if="lightbox" class="absolute right-2 top-2">
-                <IconButton :label="text.open" tone="plain" size="md" class="ilg-inline-open" @pointerdown.stop @click="lightboxIndex = slider.index.value">
+                <IconButton :label="text.open" tone="plain" size="md" class="ilg-inline-open" @pointerdown.stop @click="lightboxIndex = slider.target.value">
                     <IconFullscreen />
                 </IconButton>
             </div>

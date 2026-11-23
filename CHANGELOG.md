@@ -2,6 +2,13 @@
 
 All notable changes to `aaix/laravel-islands-gallery` will be documented in this file.
 
+## [1.0.16] - 2026-11-24
+
+### Fixed
+
+- The open button opens the image the gallery is moving to; pressed during the slide it opened the
+  previous one.
+
 ## [1.0.15] - 2026-11-23
 
 ### Changed
